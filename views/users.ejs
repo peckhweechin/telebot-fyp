@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Users - TeleBot Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app-container">
+            <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🤖 TeleBuy Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin/homepage" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Home</span>
+                </a>
+                <a href="/admin/categories" class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-text">Categories</span>
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">🛍️</span>
+                            <span class="nav-text">Products</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/admin/products" class="nav-item">All Products</a>
+                        <a href="/admin/inventory" class="nav-item">Inventory</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Customers</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/users" class="nav-item">All Customers</a>
+                        <a href="/segments" class="nav-item">Segments</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-text">Orders</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/orders" class="nav-item">All Orders</a>
+                        <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+                    </div>
+                </div>
+                <a href="/discounts" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Discounts</span>
+                </a>
+                <a href="/analytics" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/liveview" class="nav-item">
+                    <span class="nav-icon">🔴</span>
+                    <span class="nav-text">Live View</span>
+                </a>
+            </nav>
+            <!-- Notifications -->
+            <div class="sidebar-notifications">
+            <div class="notifications-header">
+                <span>Notifications</span>
+                <span class="notifications-count" id="notifCount"></span>
+            </div>
+
+            <div class="notifications-list" id="notificationsList">
+            </div>
+            </div>
+         <form action="/logout" method="POST">
+                <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+            </form>
+        </aside>
+
+  <!-- ================= MAIN CONTENT ================= -->
+  <main class="main-content">
+    <header class="content-header">
+      <h1>Users</h1>
+    </header>
+
+    <div class="content-body">
+
+      <!-- SEARCH -->
+      <div style="margin-bottom:20px;">
+        <input
+          type="text"
+          id="searchUsers"
+          placeholder="🔍 Search users..."
+          style="width:100%;max-width:400px;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;"
+        >
+      </div>
+
+      <!-- USERS TABLE -->
+      <div class="card">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>ID</th>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Telegram</th>
+                <th>Phone</th>
+                <th>Joined</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody id="usersTable">
+              <% if (users.length > 0) { %>
+                <% users.forEach(user => { %>
+                  <tr>
+                    <td><%= user.id %></td>
+                    <td><%= user.name %></td>
+                    <td><%= user.email %></td>
+                    <td><%= user.role %></td>
+
+                    <td>
+                      <% if (user.telegram_id) { %>
+                        ✅ Linked
+                      <% } else { %>
+                        ❌ Not linked
+                      <% } %>
+                    </td>
+
+                    <td><%= user.phone_number || '-' %></td>
+                    <td><%= new Date(user.created_at).toLocaleDateString() %></td>
+
+                    <td>
+                      <button
+                        class="btn btn-sm btn-primary view-user"
+                        data-id="<%= user.id %>">
+                        View
+                      </button>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td colspan="8" style="text-align:center;">
+                    No users found
+                  </td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ================= USER MODAL ================= -->
+<div id="userModal" class="modal">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>User Details</h2>
+      <button class="modal-close">&times;</button>
+    </div>
+
+    <div id="userDetails">
+      Loading...
+    </div>
+
+    <div class="modal-footer">
+      <button class="btn btn-secondary modal-close">Close</button>
+    </div>
+  </div>
+</div>
+<script src="/js/common.js"></script>
+<script src="/js/users.js"></script>
+</body>
+</html>

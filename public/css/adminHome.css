@@ -1,0 +1,188 @@
+/* === GLOBAL === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+  background-color: #e3edf7;
+  color: #222;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === HEADER === */
+header {
+  background: linear-gradient(135deg, #0088cc, #4ca8e0);
+  color: white;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 50px;
+  box-shadow: 0px 4px 15px rgba(0, 0, 0, 0.15);
+}
+
+header .logo {
+  font-size: 26px;
+  font-weight: 700;
+  text-decoration: none;
+  color: white;
+}
+
+header p {
+  font-size: 14px;
+  opacity: 0.9;
+  margin-top: 3px;
+}
+
+nav {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+nav a {
+  text-decoration: none;
+  background: white;
+  color: #0088cc;
+  font-weight: 600;
+  padding: 10px 20px;
+  border-radius: 12px;
+  box-shadow: 0 5px 15px rgba(255, 255, 255, 0.25);
+  transition: all 0.3s ease;
+}
+
+nav a:hover {
+  background: #0088cc;
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* === CATEGORY FILTERS === */
+.category-filters {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 15px;
+  margin: 40px auto 20px auto;
+}
+
+.category-filters button {
+  padding: 10px 18px;
+  border-radius: 25px;
+  border: none;
+  cursor: pointer;
+  font-weight: 600;
+  background-color: white;
+  color: #0088cc;
+  box-shadow: 0 4px 12px rgba(0, 136, 204, 0.15);
+  transition: all 0.3s ease;
+}
+
+.category-filters button:hover,
+.category-filters button.active {
+  background: linear-gradient(135deg, #0088cc, #4ca8e0);
+  color: white;
+  transform: translateY(-2px);
+}
+
+/* === PRODUCT GRID === */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 40px;
+  width: 90%;
+  max-width: 1200px;
+  margin: 0 auto 80px auto;
+}
+
+.product-card {
+  background: white;
+  border-radius: 25px;
+  box-shadow: 0 10px 25px rgba(0, 136, 204, 0.12);
+  padding: 20px;
+  text-align: center;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 136, 204, 0.25);
+}
+
+.product-card img {
+  width: 100%;
+  height: 220px;
+  object-fit: contain;
+  border-radius: 15px;
+  margin-bottom: 15px;
+}
+
+.product-card h3 {
+  font-size: 17px;
+  color: #333;
+  margin-bottom: 10px;
+}
+
+.product-card p {
+  font-size: 15px;
+  color: #555;
+  margin-bottom: 15px;
+}
+
+/* === BUTTONS === */
+.product-actions {
+  display: flex;
+  justify-content: center;
+  gap: 10px;
+}
+
+.product-actions .edit-btn,
+.product-actions .delete-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 10px;
+  color: white;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.edit-btn {
+  background: #0099ff;
+  box-shadow: 0 5px 15px rgba(0, 153, 255, 0.3);
+}
+
+.delete-btn {
+  background: #ff4b2b;
+  box-shadow: 0 5px 15px rgba(255, 75, 43, 0.3);
+}
+
+.edit-btn:hover {
+  background: #007acc;
+  transform: translateY(-2px);
+}
+
+.delete-btn:hover {
+  background: #e03e26;
+  transform: translateY(-2px);
+}
+
+/* === FOOTER === */
+footer {
+  text-align: center;
+  font-size: 14px;
+  color: #666;
+  padding: 25px 0;
+  border-top: 1px solid #ccc;
+  background-color: #f8f9fa;
+  margin-top: auto;
+}
+
+footer span {
+  color: #0088cc;
+  font-weight: 600;
+}

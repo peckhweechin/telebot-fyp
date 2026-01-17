@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Segments - TeleBot Admin Portal</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+<div class="app-container">
+
+            <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🤖 TeleBuy Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin/homepage" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Home</span>
+                </a>
+                <a href="/admin/categories" class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-text">Categories</span>
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">🛍️</span>
+                            <span class="nav-text">Products</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/admin/products" class="nav-item">All Products</a>
+                        <a href="/admin/inventory" class="nav-item">Inventory</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Customers</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/users" class="nav-item">All Customers</a>
+                        <a href="/segments" class="nav-item">Segments</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-text">Orders</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/orders" class="nav-item">All Orders</a>
+                        <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+                    </div>
+                </div>
+                <a href="/discounts" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Discounts</span>
+                </a>
+                <a href="/analytics" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/liveview" class="nav-item">
+                    <span class="nav-icon">🔴</span>
+                    <span class="nav-text">Live View</span>
+                </a>
+            </nav>
+            <!-- Notifications -->
+            <div class="sidebar-notifications">
+            <div class="notifications-header">
+                <span>Notifications</span>
+                <span class="notifications-count" id="notifCount"></span>
+            </div>
+
+            <div class="notifications-list" id="notificationsList">
+            </div>
+            </div>
+         <form action="/logout" method="POST">
+                <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+            </form>
+        </aside>
+
+  <!-- ===== MAIN CONTENT ===== -->
+  <main class="main-content">
+    <header class="content-header">
+      <h1>Customer Segments</h1>
+    </header>
+
+    <div class="content-body">
+
+      <!-- ===== SEGMENTS LIST ===== -->
+      <div id="segmentsListView">
+        <div class="segments-header">
+          <input
+            type="text"
+            id="searchSegments"
+            placeholder="🔍 Search segments..."
+            class="search-input"
+            style="max-width:300px"
+          >
+          <button class="btn btn-primary">+ Create segment</button>
+        </div>
+
+        <div class="card">
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Name</th>
+                  <th>% of customers</th>
+                  <th>Last activity</th>
+                  <th>Created by</th>
+                </tr>
+              </thead>
+              <tbody>
+                <% if (segments && segments.length > 0) { %>
+                  <% segments.forEach(segment => { %>
+                    <tr>
+                      <td><%= segment.name %></td>
+                      <td><%= segment.percentage %>%</td>
+                      <td><%= segment.last_activity || '-' %></td>
+                      <td><%= segment.created_by || 'System' %></td>
+                    </tr>
+                  <% }) %>
+                <% } else { %>
+                  <tr>
+                    <td colspan="4" class="text-center">
+                      No segments created yet
+                    </td>
+                  </tr>
+                <% } %>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script src="/js/common.js"></script>
+<script src="/js/segments.js"></script>
+</body>
+</html>

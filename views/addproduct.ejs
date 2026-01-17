@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Add Product</title>
+
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/addproduct.css">
+  <style>
+    .field-error { color: red; font-size: 12px; margin-top: 2px; }
+    .image-preview { display: flex; flex-wrap: wrap; margin-top: 8px; }
+    .draggable-img { position: relative; display: inline-block; margin-right: 8px; margin-bottom: 8px; }
+    .draggable-img img { width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; cursor: grab; }
+    .draggable-img span { position: absolute; top: 0; right: 0; cursor: pointer; background: #fff; border-radius: 50%; padding: 0 4px; font-size: 12px; }
+    .cover-label { position: absolute; bottom: 0; left: 0; background: rgba(0,0,0,0.6); color: #fff; font-size: 10px; padding: 2px 4px; }
+  </style>
+</head>
+
+<body>
+<div class="app-container">
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>🤖 TeleBuy Admin</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/admin/homepage" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Home</span></a>
+      <a href="/admin/categories" class="nav-item"><span class="nav-icon">📁</span><span class="nav-text">Categories</span></a>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle">
+          <div style="display: flex; align-items: center;">
+            <span class="nav-icon">🛍️</span>
+            <span class="nav-text">Products</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/admin/products" class="nav-item">All Products</a>
+          <a href="/admin/inventory" class="nav-item">Inventory</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle">
+          <div style="display: flex; align-items: center;">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Customers</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/users" class="nav-item">All Customers</a>
+          <a href="/segments" class="nav-item">Segments</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle">
+          <div style="display: flex; align-items: center;">
+            <span class="nav-icon">📦</span>
+            <span class="nav-text">Orders</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/orders" class="nav-item">All Orders</a>
+          <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+        </div>
+      </div>
+
+      <a href="/discounts" class="nav-item"><span class="nav-icon">🏷️</span><span class="nav-text">Discounts</span></a>
+      <a href="/analytics" class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Analytics</span></a>
+      <a href="/liveview" class="nav-item"><span class="nav-icon">🔴</span><span class="nav-text">Live View</span></a>
+    </nav>
+
+    <div class="sidebar-notifications">
+      <div class="notifications-header">
+        <span>Notifications</span>
+        <span class="notifications-count" id="notifCount"></span>
+      </div>
+      <div class="notifications-list" id="notificationsList"></div>
+    </div>
+
+    <form action="/logout" method="POST">
+      <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+    </form>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content add-product-page">
+    <header class="content-header">
+      <h1>Add New Product</h1>
+    </header>
+
+    <div class="content-body">
+      <div class="card form-card">
+        <form id="addProductForm" action="/admin/addproduct" method="POST" enctype="multipart/form-data">
+
+          <div class="form-group">
+            <label>Product Name *</label>
+            <input type="text" name="name" id="productName" value="<%= oldData ? oldData.name : '' %>">
+            <div class="field-error" id="error-name"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Price (SGD) *</label>
+            <input type="number" name="price" step="0.01" min="0.01" max="10000" value="<%= oldData ? oldData.price : '' %>">
+            <div class="field-error" id="error-price"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Quantity *</label>
+            <input type="number" name="quantity" min="1" max="300" value="<%= oldData ? oldData.quantity : '' %>">
+            <div class="field-error" id="error-quantity"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Category *</label>
+            <div class="category-dropdown">
+              <div class="dropdown-toggle" id="selected-category">
+                <%= oldData && oldData.category_id
+                    ? categories.find(c => c.id == oldData.category_id).name
+                    : 'Select Category' %>
+              </div>
+              <input type="hidden" name="category_id" id="category_id" value="<%= oldData ? oldData.category_id : '' %>">
+              <div class="dropdown-menu" id="category-menu">
+                <% categories.forEach(cat => { %>
+                  <div class="dropdown-item" data-id="<%= cat.id %>"><%= cat.name %></div>
+                <% }) %>
+              </div>
+            </div>
+            <div class="field-error" id="error-category"></div>
+          </div>
+
+          <div class="form-group">
+            <label>Images *</label>
+            <input type="file" name="images" id="imageInput" accept="image/*" multiple>
+            <input type="hidden" name="coverIndex" id="coverIndex" value="0">
+            <div id="imagePreview" class="image-preview"></div>
+            <div class="field-error" id="error-images"></div>
+          </div>
+
+          <div class="form-actions">
+            <a href="/admin/products" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Product</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script src="/js/common.js"></script>
+<script>
+const form = document.getElementById('addProductForm');
+const productName = document.getElementById('productName');
+const categoryInput = document.getElementById('category_id');
+const categoryToggle = document.getElementById('selected-category');
+const categoryMenu = document.getElementById('category-menu');
+const imageInput = document.getElementById('imageInput');
+const imagePreview = document.getElementById('imagePreview');
+let selectedFiles = [];
+
+// ========== CATEGORY DROPDOWN ==========
+categoryToggle.addEventListener('click', () => {
+  categoryMenu.style.display = categoryMenu.style.display === 'block' ? 'none' : 'block';
+});
+categoryMenu.querySelectorAll('.dropdown-item').forEach(item => {
+  item.addEventListener('click', () => {
+    categoryInput.value = item.dataset.id;
+    categoryToggle.textContent = item.textContent;
+    categoryMenu.style.display = 'none';
+  });
+});
+document.addEventListener('click', e => {
+  if (!categoryToggle.contains(e.target) && !categoryMenu.contains(e.target)) {
+    categoryMenu.style.display = 'none';
+  }
+});
+
+// ========== IMAGE PREVIEW WITH MULTIPLE & DRAG ==========
+imageInput.addEventListener('change', () => {
+  const newFiles = Array.from(imageInput.files);
+  newFiles.forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    selectedFiles.push(file);
+
+    const reader = new FileReader();
+    reader.onload = e => {
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('draggable-img');
+      const img = document.createElement('img');
+      img.src = e.target.result;
+      wrapper.appendChild(img);
+
+      const coverLabel = document.createElement('div');
+      coverLabel.classList.add('cover-label');
+      wrapper.appendChild(coverLabel);
+
+      const removeBtn = document.createElement('span');
+      removeBtn.textContent = '✕';
+      removeBtn.onclick = () => {
+        const idx = selectedFiles.indexOf(file);
+        if (idx > -1) selectedFiles.splice(idx, 1);
+        wrapper.remove();
+        updateCoverLabel();
+      };
+      wrapper.appendChild(removeBtn);
+
+      // Drag and drop
+      wrapper.draggable = true;
+      wrapper.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', selectedFiles.indexOf(file)));
+      wrapper.addEventListener('dragover', e => e.preventDefault());
+      wrapper.addEventListener('drop', e => {
+        e.preventDefault();
+        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+        const toIndex = Array.from(imagePreview.children).indexOf(wrapper);
+        const moved = selectedFiles.splice(fromIndex, 1)[0];
+        selectedFiles.splice(toIndex, 0, moved);
+        if (fromIndex < toIndex) {
+          imagePreview.insertBefore(imagePreview.children[fromIndex], imagePreview.children[toIndex].nextSibling);
+        } else {
+          imagePreview.insertBefore(imagePreview.children[fromIndex], imagePreview.children[toIndex]);
+        }
+        updateCoverLabel();
+      });
+
+      imagePreview.appendChild(wrapper);
+      updateCoverLabel();
+    };
+    reader.readAsDataURL(file);
+  });
+});
+
+function updateCoverLabel() {
+  const wrappers = Array.from(imagePreview.children);
+  wrappers.forEach((w, i) => {
+    const label = w.querySelector('.cover-label');
+    label.textContent = i === 0 ? 'Cover' : '';
+    w.querySelector('img').style.border = i === 0 ? '2px solid #007BFF' : '1px solid #ccc';
+  });
+  // Update the hidden input so server knows which image is cover
+  document.getElementById('coverIndex').value = 0; // first image is always cover
+}
+
+// OPTIONAL: allow admin to click an image to make it the cover
+imagePreview.addEventListener('click', e => {
+  if (e.target.tagName === 'IMG') {
+    const clickedWrapper = e.target.parentElement;
+    // move the clicked image to first position
+    const idx = Array.from(imagePreview.children).indexOf(clickedWrapper);
+    if (idx > 0) {
+      const moved = selectedFiles.splice(idx, 1)[0];
+      selectedFiles.unshift(moved);
+
+      const domChildren = Array.from(imagePreview.children);
+      imagePreview.insertBefore(domChildren[idx], imagePreview.firstChild);
+      updateCoverLabel();
+    }
+  }
+});
+
+// --- FORM SUBMIT VALIDATION ---
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+  let hasError = false;
+
+  if (!productName.value.trim()) {
+    document.getElementById('error-name').textContent = 'Product name is required.';
+    hasError = true;
+  }
+  if (nameExists) {
+    document.getElementById('error-name').textContent = 'This product name already exists.';
+    hasError = true;
+  }
+  if (!form.price.value || parseFloat(form.price.value) <= 0) {
+    document.getElementById('error-price').textContent = 'Price must be greater than 0.';
+    hasError = true;
+  }
+  if (!form.quantity.value || parseInt(form.quantity.value) <= 0) {
+    document.getElementById('error-quantity').textContent = 'Quantity must be at least 1.';
+    hasError = true;
+  }
+  if (!categoryInput.value) {
+    document.getElementById('error-category').textContent = 'Please select a category.';
+    hasError = true;
+  }
+  if (selectedFiles.length === 0) {
+    document.getElementById('error-images').textContent = 'Please select at least one image.';
+    hasError = true;
+  }
+
+  if (!hasError) {
+    // Ensure the first file in selectedFiles is the one labeled "Cover"
+    const wrappers = Array.from(imagePreview.children);
+    const coverWrapper = wrappers.find(w => w.querySelector('.cover-label')?.textContent === 'Cover');
+    if (coverWrapper) {
+      const idx = wrappers.indexOf(coverWrapper);
+      if (idx > 0) {
+        const coverFile = selectedFiles.splice(idx, 1)[0];
+        selectedFiles.unshift(coverFile);
+      }
+    }
+
+    // Send files in correct order
+    const formData = new FormData(form);
+    selectedFiles.forEach(file => formData.append('images', file));
+    form.submit(); // or use fetch(form.action, { method: 'POST', body: formData }) if using AJAX
+  }
+});
+
+// ========== DUPLICATE NAME CHECK (AJAX) ==========
+let nameExists = false;
+productName.addEventListener('blur', async () => {
+  const name = productName.value.trim();
+  if (!name) return;
+  const res = await fetch(`/admin/check-product-name?name=${encodeURIComponent(name)}`);
+  const data = await res.json();
+  if (data.exists) {
+    document.getElementById('error-name').textContent = 'This product name already exists.';
+    nameExists = true;
+  } else {
+    document.getElementById('error-name').textContent = '';
+    nameExists = false;
+  }
+});
+
+// ========== FORM SUBMIT VALIDATION ==========
+form.addEventListener('submit', e => {
+  e.preventDefault();
+  document.querySelectorAll('.field-error').forEach(el => el.textContent = '');
+  let hasError = false;
+
+  if (!productName.value.trim()) {
+    document.getElementById('error-name').textContent = 'Product name is required.';
+    hasError = true;
+  }
+  if (nameExists) {
+    document.getElementById('error-name').textContent = 'This product name already exists.';
+    hasError = true;
+  }
+  if (!form.price.value || parseFloat(form.price.value) <= 0) {
+    document.getElementById('error-price').textContent = 'Price must be greater than 0.';
+    hasError = true;
+  }
+  if (!form.quantity.value || parseInt(form.quantity.value) <= 0) {
+    document.getElementById('error-quantity').textContent = 'Quantity must be at least 1.';
+    hasError = true;
+  }
+  if (!categoryInput.value) {
+    document.getElementById('error-category').textContent = 'Please select a category.';
+    hasError = true;
+  }
+  if (selectedFiles.length === 0) {
+    document.getElementById('error-images').textContent = 'Please select at least one image.';
+    hasError = true;
+  }
+
+  if (!hasError) form.submit();
+});
+</script>
+</body>
+</html>

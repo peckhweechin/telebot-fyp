@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Live View - TeleBot Admin Portal</title>
+
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+</head>
+<body>
+
+<div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🤖 TeleBuy Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin/homepage" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Home</span>
+                </a>
+                <a href="/admin/categories" class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-text">Categories</span>
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">🛍️</span>
+                            <span class="nav-text">Products</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/admin/products" class="nav-item">All Products</a>
+                        <a href="/admin/inventory" class="nav-item">Inventory</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Customers</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/users" class="nav-item">All Customers</a>
+                        <a href="/segments" class="nav-item">Segments</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-text">Orders</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/orders" class="nav-item">All Orders</a>
+                        <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+                    </div>
+                </div>
+                <a href="/discounts" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Discounts</span>
+                </a>
+                <a href="/analytics" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/liveview" class="nav-item">
+                    <span class="nav-icon">🔴</span>
+                    <span class="nav-text">Live View</span>
+                </a>
+            </nav>
+            <!-- Notifications -->
+            <div class="sidebar-notifications">
+            <div class="notifications-header">
+                <span>Notifications</span>
+                <span class="notifications-count" id="notifCount"></span>
+            </div>
+
+            <div class="notifications-list" id="notificationsList">
+            </div>
+            </div>
+         <form action="/logout" method="POST">
+                <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+            </form>
+        </aside>
+
+
+
+
+  <!-- ===== MAIN ===== -->
+  <main class="main-content">
+
+    <header class="content-header">
+      <h1>🔴 Live View</h1>
+    </header>
+
+    <div class="content-body">
+
+      <div class="live-view-grid">
+
+        <!-- ===== LEFT STATS ===== -->
+        <div class="live-view-left">
+
+          <div class="live-stat-card">
+            <div class="live-stat-label">Visitors right now</div>
+            <div class="live-stat-value" id="visitorsNow">0</div>
+          </div>
+
+          <div class="live-stat-card">
+            <div class="live-stat-label">Total sales</div>
+            <div class="live-stat-value" id="liveTotalSales">SGD 0</div>
+          </div>
+
+          <div class="live-stat-card">
+            <div class="live-stat-label">Sessions</div>
+            <div class="live-stat-value" id="liveSessions">0</div>
+            <canvas id="liveSessionsChart"></canvas>
+          </div>
+
+          <div class="live-stat-card">
+            <div class="live-stat-label">Orders</div>
+            <div class="live-stat-value" id="liveOrders">0</div>
+          </div>
+
+          <div class="live-stat-card">
+            <h4>Customer behaviour</h4>
+            <p>Active carts: <strong id="activeCarts">0</strong></p>
+            <p>Checking out: <strong id="checkingOut">0</strong></p>
+            <p>Purchased: <strong id="purchased">0</strong></p>
+          </div>
+
+          <div class="live-stat-card">
+            <h4>Sessions by location</h4>
+            <div id="sessionsByLocation"></div>
+          </div>
+
+          <div class="live-stat-card">
+            <h4>New vs Returning</h4>
+            <canvas id="customerTypeChart"></canvas>
+          </div>
+
+        </div>
+
+        <!-- ===== MAP ===== -->
+        <div class="live-view-map-container">
+          <div id="liveMap"></div>
+        </div>
+
+        <!-- ===== NOTIFICATION COLUMN ===== -->
+        <div class="live-view-right">
+          <h3>Live Notifications</h3>
+          <div id="liveNotifications" class="notification-list"></div>
+        </div>
+
+      </div>
+
+    </div>
+  </main>
+
+</div>
+
+<script src="/js/common.js"></script>
+<script src="/js/liveview.js"></script>
+</body>
+</html>

@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Products - TeleBot Admin Portal</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🤖 TeleBuy Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin/homepage" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Home</span>
+                </a>
+                <a href="/admin/categories" class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-text">Categories</span>
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">🛍️</span>
+                            <span class="nav-text">Products</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/admin/products" class="nav-item">All Products</a>
+                        <a href="/admin/inventory" class="nav-item">Inventory</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Customers</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/users" class="nav-item">All Customers</a>
+                        <a href="/segments" class="nav-item">Segments</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-text">Orders</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/orders" class="nav-item">All Orders</a>
+                        <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+                    </div>
+                </div>
+                <a href="/discounts" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Discounts</span>
+                </a>
+                <a href="/analytics" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/liveview" class="nav-item">
+                    <span class="nav-icon">🔴</span>
+                    <span class="nav-text">Live View</span>
+                </a>
+            </nav>
+            <!-- Notifications -->
+            <div class="sidebar-notifications">
+            <div class="notifications-header">
+                <span>Notifications</span>
+                <span class="notifications-count" id="notifCount"></span>
+            </div>
+
+            <div class="notifications-list" id="notificationsList">
+            </div>
+            </div>
+         <form action="/logout" method="POST">
+                <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+            </form>
+        </aside>
+
+
+
+  <!-- ================= MAIN ================= -->
+  <main class="main-content">
+
+    <header class="content-header">
+      <h1>Products</h1>
+
+      <div class="header-actions">
+        <a href="/admin/addproduct" class="btn btn-primary">
+          + Add Product
+        </a>
+      </div>
+    </header>
+
+    <div class="content-body">
+
+      <!-- ================= PRODUCTS LIST ================= -->
+      <div class="search-container" style="margin-bottom:20px;">
+        <input
+          type="text"
+          id="searchProducts"
+          placeholder="🔍 Search products..."
+          style="width:100%;max-width:400px;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;"
+        >
+      </div>
+
+      <div class="card">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Category</th>
+                <th>Price</th>
+                <th>Stock</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody id="productsTable">
+              <% if (products.length === 0) { %>
+                <tr>
+                  <td colspan="7" class="text-center">No products found</td>
+                </tr>
+              <% } else { %>
+                <% products.forEach(p => { %>
+                  <tr>
+                    <td>
+                      <% if (p.image_url) { %>
+                        <img src="<%= p.image_url %>" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
+                      <% } else { %>
+                        —
+                      <% } %>
+                    </td>
+                    <td><%= p.name %></td>
+                    <td><%= p.category_name || '-' %></td>
+                    <td>$<%= Number(p.price).toFixed(2) %></td>
+                    <td><%= p.stock %></td>
+                    <td>
+                      <span class="<%= p.is_active ? 'status-active' : 'status-inactive' %>">
+                        <%= p.is_active ? 'Active' : 'Inactive' %>
+                      </span>
+                    </td>
+                    <td>
+                     <a href="/admin/editproduct/<%= p.id %>" class="btn btn-sm">Edit</a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+</div>
+<script>
+  const searchInput = document.getElementById('searchProducts');
+  const tableBody = document.getElementById('productsTable');
+
+  searchInput.addEventListener('input', function () {
+    const value = this.value.toLowerCase();
+    const rows = tableBody.getElementsByTagName('tr');
+
+    Array.from(rows).forEach(row => {
+      const text = row.innerText.toLowerCase();
+      row.style.display = text.includes(value) ? '' : 'none';
+    });
+  });
+</script>
+    <script src="/js/common.js"></script>
+    <script src="/js/dashboard.js"></script>
+
+</body>
+</html>

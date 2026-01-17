@@ -1,0 +1,394 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Product - TeleBot Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+  <link rel="stylesheet" href="/css/adminEditProduct.css">
+  <style>
+    .image-preview { display: flex; flex-wrap: wrap; margin-top: 8px; }
+    .draggable-img { position: relative; display: inline-block; margin-right: 8px; margin-bottom: 8px; }
+    .draggable-img img { width: 100px; height: 100px; object-fit: cover; border: 1px solid #ccc; }
+    .draggable-img span { position: absolute; top: 0; right: 0; cursor: pointer; background: #fff; border-radius: 50%; padding: 0 4px; font-size: 12px; }
+    .cover-badge {
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      background: rgba(0,0,0,0.6);
+      color: #fff;
+      font-size: 10px;
+      padding: 2px 4px;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>🤖 TeleBuy Admin</h2>
+    </div>
+    <nav class="sidebar-nav">
+      <a href="/admin/homepage" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Home</span></a>
+      <a href="/admin/categories" class="nav-item"><span class="nav-icon">📁</span><span class="nav-text">Categories</span></a>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle">
+          <div style="display: flex; align-items: center;">
+            <span class="nav-icon">🛍️</span>
+            <span class="nav-text">Products</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/admin/products" class="nav-item">All Products</a>
+          <a href="/admin/inventory" class="nav-item">Inventory</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle">
+          <div style="display: flex; align-items: center;">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Customers</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/users" class="nav-item">All Customers</a>
+          <a href="/segments" class="nav-item">Segments</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle">
+          <div style="display: flex; align-items: center;">
+            <span class="nav-icon">📦</span>
+            <span class="nav-text">Orders</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/orders" class="nav-item">All Orders</a>
+          <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+        </div>
+      </div>
+
+      <a href="/discounts" class="nav-item"><span class="nav-icon">🏷️</span><span class="nav-text">Discounts</span></a>
+      <a href="/analytics" class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Analytics</span></a>
+      <a href="/liveview" class="nav-item"><span class="nav-icon">🔴</span><span class="nav-text">Live View</span></a>
+    </nav>
+
+    <div class="sidebar-notifications">
+      <div class="notifications-header">
+        <span>Notifications</span>
+        <span class="notifications-count" id="notifCount"></span>
+      </div>
+      <div class="notifications-list" id="notificationsList"></div>
+    </div>
+
+    <form action="/logout" method="POST">
+      <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+    </form>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="main-content">
+    <header class="content-header">
+      <h1>Edit Product</h1>
+    </header>
+
+    <div class="content-body">
+      <div class="card edit-product-card">
+        <form
+          action="/admin/editproduct/<%= product.id %>"
+          method="POST"
+          enctype="multipart/form-data"
+          id="editProductForm"
+        >
+          <!-- Product Name -->
+          <div class="form-group">
+            <label>Product Name *</label>
+            <input type="text" name="name" id="productName" value="<%= product.name %>" required>
+            <div id="error-name" class="field-error"></div>
+          </div>
+
+          <!-- Price and Quantity -->
+          <div class="form-row">
+            <div class="form-group">
+              <label>Price ($)</label>
+              <input type="number" name="price" step="0.01" value="<%= product.price %>" required>
+            </div>
+            <div class="form-group">
+              <label>Quantity</label>
+              <input type="number" name="quantity" min="0" value="<%= product.quantity %>" required>
+            </div>
+          </div>
+
+          <!-- Category -->
+          <div class="form-group">
+            <label>Category</label>
+            <select name="category_id" required>
+              <% categories.forEach(cat => { %>
+                <option value="<%= cat.id %>" <%= product.category_id === cat.id ? 'selected' : '' %>><%= cat.name %></option>
+              <% }) %>
+            </select>
+          </div>
+
+          <!-- EXISTING IMAGES -->
+          <div class="form-group">
+            <label>Existing Images</label>
+            <div class="image-preview" id="existingImagesPreview">
+              <% if (product.images && product.images.length) { %>
+                <% product.images.forEach(function(img) { %>
+                  <div class="draggable-img" data-id="<%= img.id %>">
+                    <img src="<%= img.image_url %>" alt="Product Image">
+                    <% if (img.image_url === product.image_url) { %>
+                      <div class="cover-badge">COVER</div>
+                    <% } %>
+                    <span class="remove-existing">✕</span>
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
+          </div>
+
+          <!-- NEW IMAGES -->
+          <div class="form-group">
+            <label>Add New Images</label>
+            <input type="file" name="images" id="imageInput" accept="image/*" multiple>
+            <div id="newImagePreview" class="image-preview"></div>
+          </div>
+
+          <!-- Hidden input to track removed existing images -->
+          <input type="hidden" name="removedImages" id="removedImages">
+
+          <div class="form-actions">
+            <a href="/admin/products" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Update Product</button>
+          </div>
+        </form>
+
+        <!-- DELETE PRODUCT -->
+        <div style="margin-top: 20px;">
+          <button id="deleteBtn" class="btn btn-danger">Delete Product</button>
+          <div id="deleteConfirm" style="display:none; margin-top:10px; color:red;">
+            <p>Are you sure you want to delete this product?</p>
+            <button id="confirmDelete" class="btn btn-danger">Yes, Delete</button>
+            <button id="cancelDelete" class="btn btn-secondary">Cancel</button>
+          </div>
+          <form id="deleteForm" action="/admin/deleteproduct/<%= product.id %>" method="POST" style="display:none;"></form>
+        </div>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  const existingImagesPreview = document.getElementById('existingImagesPreview');
+  const removedImagesInput = document.getElementById('removedImages');
+  const imageInput = document.getElementById('imageInput');
+  const newImagePreview = document.getElementById('newImagePreview');
+  const productNameInput = document.getElementById('productName');
+
+  let nameExists = false;
+  let removedImages = [];
+  let newFiles = [];
+
+  // --- EXISTING IMAGES: remove, drag, set cover ---
+  function updateCoverLabels() {
+    const wrappers = Array.from(existingImagesPreview.children);
+    wrappers.forEach((w, i) => {
+      let badge = w.querySelector('.cover-badge');
+      if (i === 0) {
+        if (!badge) {
+          badge = document.createElement('div');
+          badge.classList.add('cover-badge');
+          badge.textContent = 'COVER';
+          w.appendChild(badge);
+        } else {
+          badge.textContent = 'COVER';
+        }
+        w.querySelector('img').style.border = '2px solid #007BFF';
+      } else {
+        if (badge) badge.textContent = '';
+        w.querySelector('img').style.border = '1px solid #ccc';
+      }
+    });
+  }
+
+  // Remove existing image
+  existingImagesPreview.addEventListener('click', e => {
+    if (e.target.classList.contains('remove-existing')) {
+      const wrapper = e.target.parentElement;
+      removedImages.push(wrapper.getAttribute('data-id'));
+      removedImagesInput.value = removedImages.join(',');
+      wrapper.remove();
+      updateCoverLabels();
+    }
+  });
+
+  // Make existing images draggable
+  Array.from(existingImagesPreview.children).forEach(w => {
+    w.draggable = true;
+    w.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', Array.from(existingImagesPreview.children).indexOf(w)));
+    w.addEventListener('dragover', e => e.preventDefault());
+    w.addEventListener('drop', e => {
+      e.preventDefault();
+      const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+      const toIndex = Array.from(existingImagesPreview.children).indexOf(w);
+      const children = Array.from(existingImagesPreview.children);
+      const moved = children[fromIndex];
+      existingImagesPreview.removeChild(moved);
+      if (fromIndex < toIndex) {
+        existingImagesPreview.insertBefore(moved, children[toIndex].nextSibling);
+      } else {
+        existingImagesPreview.insertBefore(moved, children[toIndex]);
+      }
+      updateCoverLabels();
+    });
+  });
+
+  updateCoverLabels();
+
+  // --- NEW IMAGES PREVIEW ---
+  imageInput.addEventListener('change', () => {
+    newFiles = Array.from(imageInput.files);
+    newImagePreview.innerHTML = '';
+
+    newFiles.forEach((file, index) => {
+      if (!file.type.startsWith('image/')) return;
+
+      const wrapper = document.createElement('div');
+      wrapper.classList.add('draggable-img');
+
+      const reader = new FileReader();
+      reader.onload = e => {
+        const img = document.createElement('img');
+        img.src = e.target.result;
+        wrapper.appendChild(img);
+
+        const coverLabel = document.createElement('div');
+        coverLabel.classList.add('cover-badge');
+        wrapper.appendChild(coverLabel);
+        updateNewImageCoverLabels();
+      };
+      reader.readAsDataURL(file);
+
+      const removeBtn = document.createElement('span');
+      removeBtn.textContent = '✕';
+      removeBtn.onclick = () => {
+        newFiles.splice(index, 1);
+        wrapper.remove();
+        const dt = new DataTransfer();
+        newFiles.forEach(f => dt.items.add(f));
+        imageInput.files = dt.files;
+        updateNewImageCoverLabels();
+      };
+      wrapper.appendChild(removeBtn);
+
+      wrapper.draggable = true;
+      wrapper.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', index));
+      wrapper.addEventListener('dragover', e => e.preventDefault());
+      wrapper.addEventListener('drop', e => {
+        e.preventDefault();
+        const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
+        const toIndex = Array.from(newImagePreview.children).indexOf(wrapper);
+        const moved = newFiles.splice(fromIndex, 1)[0];
+        newFiles.splice(toIndex, 0, moved);
+
+        if (fromIndex < toIndex) {
+          newImagePreview.insertBefore(newImagePreview.children[fromIndex], newImagePreview.children[toIndex].nextSibling);
+        } else {
+          newImagePreview.insertBefore(newImagePreview.children[fromIndex], newImagePreview.children[toIndex]);
+        }
+        const dt = new DataTransfer();
+        newFiles.forEach(f => dt.items.add(f));
+        imageInput.files = dt.files;
+        updateNewImageCoverLabels();
+      });
+
+      newImagePreview.appendChild(wrapper);
+    });
+  });
+
+  function updateNewImageCoverLabels() {
+    const wrappers = Array.from(newImagePreview.children);
+    wrappers.forEach((w, i) => {
+      const label = w.querySelector('.cover-badge');
+      label.textContent = i === 0 ? 'Cover' : '';
+      w.querySelector('img').style.border = i === 0 ? '2px solid #007BFF' : '1px solid #ccc';
+    });
+  }
+
+  // --- DUPLICATE NAME CHECK (AJAX) ---
+  productNameInput.addEventListener('blur', async () => {
+    const name = productNameInput.value.trim();
+    if (!name) return;
+
+    const res = await fetch(`/admin/check-product-name?name=${encodeURIComponent(name)}&excludeId=<%= product.id %>`);
+    const data = await res.json();
+
+    if (data.exists) {
+      document.getElementById('error-name').textContent = 'A product with a similar name already exists.';
+      nameExists = true;
+    } else {
+      document.getElementById('error-name').textContent = '';
+      nameExists = false;
+    }
+  });
+
+  // --- FORM SUBMIT ---
+  const editForm = document.getElementById('editProductForm');
+  editForm.addEventListener('submit', e => {
+    // Prevent submission if duplicate name
+    if (nameExists) {
+      e.preventDefault();
+      document.getElementById('error-name').textContent = 'A product with a similar name already exists.';
+      productNameInput.focus();
+      return;
+    }
+
+    // Set cover for existing images
+    const existingIds = Array.from(existingImagesPreview.children)
+      .map(w => w.getAttribute('data-id'))
+      .filter(id => id && !removedImages.includes(id));
+
+    const coverId = existingIds[0] || null;
+    const coverInput = document.createElement('input');
+    coverInput.type = 'hidden';
+    coverInput.name = 'coverImageId';
+    coverInput.value = coverId;
+    editForm.appendChild(coverInput);
+
+    // Append newFiles in order to FormData (if needed)
+    const formData = new FormData(editForm);
+    newFiles.forEach(f => formData.append('images', f));
+
+    // Submit via fetch (optional) or just let form submit normally
+    // editForm.submit(); // default form submit
+  });
+
+  // --- DELETE PRODUCT LOGIC ---
+  const deleteBtn = document.getElementById('deleteBtn');
+  const deleteConfirm = document.getElementById('deleteConfirm');
+  const confirmDelete = document.getElementById('confirmDelete');
+  const cancelDelete = document.getElementById('cancelDelete');
+  const deleteForm = document.getElementById('deleteForm');
+
+  deleteBtn.addEventListener('click', () => {
+    deleteConfirm.style.display = 'block';
+    deleteBtn.style.display = 'none';
+  });
+
+  cancelDelete.addEventListener('click', () => {
+    deleteConfirm.style.display = 'none';
+    deleteBtn.style.display = 'inline-block';
+  });
+
+  confirmDelete.addEventListener('click', () => deleteForm.submit());
+</script>
+
+</body>
+</html>

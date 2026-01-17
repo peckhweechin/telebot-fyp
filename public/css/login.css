@@ -1,0 +1,226 @@
+/* === IMPORT FONT === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* ================= GLOBAL RESET ================= */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+/* ================= BODY ================= */
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  color: #1e293b;
+}
+
+/* ================= HEADER ================= */
+header {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 18px 50px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+.logo a {
+  text-decoration: none;
+  color: white;
+  font-size: 26px;
+  font-weight: 700;
+  letter-spacing: 1px;
+}
+
+.logo a:hover {
+  opacity: 0.85;
+}
+
+/* ================= PAGE LAYOUT ================= */
+.login-container {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 70px 20px;
+}
+
+/* ================= CONTENT WRAPPER (NO CARD) ================= */
+.login-box {
+  width: 100%;
+  max-width: 600px;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* ================= WELCOME TEXT ================= */
+.welcome-text {
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+.welcome-text h2 {
+  font-size: 22px;
+  font-weight: 600;
+  color: #2563eb;
+}
+
+/* ================= PAGE TITLE ================= */
+.login-box h1 {
+  font-size: 30px;
+  font-weight: 700;
+  color: #1e293b;
+  text-align: center;
+  margin-bottom: 35px;
+}
+
+/* ================= FORM ================= */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 22px;
+}
+
+/* ================= LABELS ================= */
+label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+}
+
+/* ================= INPUTS ================= */
+input[type="text"],
+input[type="email"],
+input[type="password"] {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  font-size: 15px;
+  background-color: #ffffff;
+  transition: all 0.25s ease;
+}
+
+input::placeholder {
+  color: #94a3b8;
+}
+
+input:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* ================= PASSWORD RULES ================= */
+.password-rules {
+  list-style: none;
+  padding-left: 0;
+  font-size: 13px;
+  margin-top: 6px;
+  margin-bottom: 10px;
+}
+
+.password-rules li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ef4444;
+  margin-bottom: 6px;
+}
+
+.password-rules li::before {
+  content: "●";
+  font-size: 10px;
+}
+
+.password-rules li.valid {
+  color: #10b981;
+}
+
+/* ================= BUTTON ================= */
+button {
+  width: 100%;
+  padding: 16px;
+  margin-top: 10px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 14px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.25s ease;
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.25);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* ================= AUTH LINK ================= */
+.signup-link,
+.switch-auth {
+  margin-top: 20px;
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.signup-link a,
+.switch-auth a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.signup-link a:hover,
+.switch-auth a:hover {
+  text-decoration: underline;
+}
+
+/* ================= FOOTER ================= */
+footer {
+  text-align: center;
+  padding: 20px;
+  font-size: 14px;
+  color: #64748b;
+}
+
+/* ================= RESPONSIVE ================= */
+@media (max-width: 768px) {
+  .login-container {
+    padding: 50px 16px;
+  }
+
+  .login-box h1 {
+    font-size: 26px;
+  }
+
+  .welcome-text h2 {
+    font-size: 20px;
+  }
+}
+
+/* ================= ANIMATION ================= */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

@@ -1,0 +1,271 @@
+/* === IMPORT FONT === */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+
+/* === GLOBAL RESET === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body {
+  height: 100%;
+}
+
+/* === BODY === */
+body {
+  font-family: 'Inter', 'Segoe UI', Tahoma, sans-serif;
+  background-color: #f8fafc;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  color: #1e293b;
+}
+
+/* === HEADER === */
+header {
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  display: flex;
+  align-items: center;
+  padding: 18px 50px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+}
+
+header .logo {
+  text-decoration: none;
+  font-size: 26px;
+  font-weight: bold;
+  color: white;
+  letter-spacing: 1px;
+}
+
+header .logo:hover {
+  opacity: 0.85;
+}
+
+/* === MAIN CENTERING === */
+main {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 60px 20px;
+}
+
+/* =========================================================
+   AUTH BUBBLE (LOGIN & SIGNUP SHARED)
+   ========================================================= */
+.auth-box {
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(10px);
+  border-radius: 40px 40px 40px 10px;
+  box-shadow: 0 10px 35px rgba(37, 99, 235, 0.18);
+  width: 90%;
+  max-width: 500px;
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  position: relative;
+  animation: fadeIn 0.6s ease-in-out;
+}
+
+/* Telegram-style tail */
+.auth-box::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 50px;
+  width: 0;
+  height: 0;
+  border: 15px solid transparent;
+  border-top-color: #ffffff;
+  border-bottom: 0;
+  border-left: 0;
+  margin-bottom: -10px;
+}
+
+/* === WELCOME TEXT === */
+.welcome-text {
+  font-size: 15px;
+  font-weight: 600;
+  color: #2563eb;
+  text-align: center;
+}
+
+/* === TITLE === */
+.auth-box h1,
+.auth-box h2 {
+  font-size: 26px;
+  font-weight: 700;
+  color: #2563eb;
+  text-align: center;
+  margin-bottom: 10px;
+}
+
+/* === FORM (NO BUBBLE STYLING HERE) === */
+form {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* === LABELS === */
+label {
+  font-size: 15px;
+  font-weight: 600;
+  color: #1e293b;
+  text-align: left;
+}
+
+/* === INPUTS === */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+select {
+  width: 100%;
+  padding: 12px 14px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background-color: #ffffff;
+  font-size: 15px;
+  transition: all 0.3s ease;
+}
+
+input:focus,
+select:focus {
+  outline: none;
+  border-color: #2563eb;
+  box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+}
+
+/* === PLACEHOLDER === */
+::placeholder {
+  color: #94a3b8;
+}
+
+
+
+/* === BUTTON === */
+button {
+  width: 100%;
+  padding: 14px;
+  background: linear-gradient(135deg, #2563eb, #1d4ed8);
+  color: white;
+  border: none;
+  border-radius: 12px;
+  font-size: 16px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 6px 15px rgba(37, 99, 235, 0.25);
+}
+
+button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 25px rgba(37, 99, 235, 0.35);
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+/* === AUTH SWITCH LINK === */
+.switch-auth {
+  text-align: center;
+  font-size: 14px;
+  color: #64748b;
+}
+
+.switch-auth a {
+  color: #2563eb;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.switch-auth a:hover {
+  text-decoration: underline;
+}
+
+/* === PASSWORD RULES === */
+.password-rules {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 8px;
+  margin-bottom: 16px;
+  font-size: 13px;
+  text-align: left;
+}
+
+.password-rules li {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: #ef4444;
+  margin-bottom: 6px;
+  transition: color 0.2s ease;
+}
+
+.password-rules li::before {
+  content: "●";
+  font-size: 10px;
+}
+
+/* rule satisfied */
+.password-rules li.valid {
+  color: #10b981;
+}
+.password-hint.valid {
+  color: #2ecc71;
+}
+
+.password-hint.invalid {
+  color: #e74c3c;
+}
+
+/* === FOOTER === */
+footer {
+  text-align: center;
+  padding: 20px;
+  background: #f8fafc;
+  color: #64748b;
+  font-size: 14px;
+}
+
+/* === RESPONSIVE === */
+@media (max-width: 768px) {
+  .auth-box {
+    padding: 40px 30px;
+  }
+
+  .auth-box h1,
+  .auth-box h2 {
+    font-size: 24px;
+  }
+
+  button {
+    font-size: 15px;
+  }
+}
+
+/* === ANIMATION === */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(25px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.auth-box h1 {
+  margin-bottom: 30px; /* increase gap below "Create Admin Account" */
+}
+
+label[for="username"],
+label:has(+ input[type="username"]) {
+  margin-top: 16px;
+}

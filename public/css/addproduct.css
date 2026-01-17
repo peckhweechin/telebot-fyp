@@ -1,0 +1,106 @@
+/* ===== ADD PRODUCT (MATCH ADD CATEGORY) ===== */
+
+.add-product-page .form-card {
+  max-width: 600px;
+  margin: 0 auto;
+  background: #ffffff;
+  border-radius: 12px;
+  padding: 28px 32px;
+  border: 1px solid #e5e7eb;
+}
+
+.add-product-page .form-group {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 18px;
+}
+
+.add-product-page .form-group label {
+  font-size: 14px;
+  font-weight: 500;
+  margin-bottom: 6px;
+  color: #1f2937;
+}
+
+.add-product-page .form-group input,
+.add-product-page .form-group textarea,
+.add-product-page .form-group input[type="file"] {
+  padding: 10px 12px;
+  border-radius: 8px;
+  border: 1px solid #d1d5db;
+  font-size: 14px;
+  outline: none;
+  background: #fff;
+}
+
+.add-product-page .form-group input:focus,
+.add-product-page .form-group textarea:focus {
+  border-color: #2563eb;
+}
+
+/* Checkbox (if any later) */
+.add-product-page .checkbox-group {
+  margin-top: 10px;
+}
+
+.add-product-page .checkbox-group input {
+  margin-right: 8px;
+}
+
+/* Actions */
+.add-product-page .form-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  margin-top: 24px;
+}
+
+/* ===== CATEGORY DROPDOWN ===== */
+.category-dropdown {
+  position: relative;
+}
+
+.dropdown-toggle {
+  width: 100%;
+  padding: 10px 12px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+  cursor: pointer;
+}
+
+.dropdown-toggle::after {
+  content: "▾";
+  float: right;
+  color: #6b7280;
+}
+
+.dropdown-menu {
+  display: none;              /* IMPORTANT */
+  position: absolute;
+  top: 110%;
+  left: 0;
+  width: 100%;
+  background: #fff;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  max-height: 220px;
+  overflow-y: auto;
+  z-index: 20;
+}
+
+.dropdown-menu.active {
+  display: block;
+}
+
+.dropdown-item {
+  padding: 10px 12px;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.dropdown-item:hover {
+  background: #f1f5f9;
+}
+

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Discounts - TeleBot Admin Portal</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🤖 TeleBuy Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin/homepage" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Home</span>
+                </a>
+                <a href="/admin/categories" class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-text">Categories</span>
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">🛍️</span>
+                            <span class="nav-text">Products</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/admin/products" class="nav-item">All Products</a>
+                        <a href="/admin/inventory" class="nav-item">Inventory</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Customers</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/users" class="nav-item">All Customers</a>
+                        <a href="/segments" class="nav-item">Segments</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-text">Orders</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/orders" class="nav-item">All Orders</a>
+                        <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+                    </div>
+                </div>
+                <a href="/discounts" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Discounts</span>
+                </a>
+                <a href="/analytics" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/liveview" class="nav-item">
+                    <span class="nav-icon">🔴</span>
+                    <span class="nav-text">Live View</span>
+                </a>
+            </nav>
+            <!-- Notifications -->
+            <div class="sidebar-notifications">
+            <div class="notifications-header">
+                <span>Notifications</span>
+                <span class="notifications-count" id="notifCount"></span>
+            </div>
+
+            <div class="notifications-list" id="notificationsList">
+            </div>
+            </div>
+         <form action="/logout" method="POST">
+                <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+            </form>
+        </aside>
+
+
+  <!-- ================= MAIN ================= -->
+  <main class="main-content">
+
+    <header class="content-header">
+      <h1>Discounts & Vouchers</h1>
+      <a href="/discounts/add" class="btn btn-primary">
+        + Create Discount
+      </a>
+    </header>
+
+    <div class="content-body">
+
+      <!-- ================= TABLE ================= -->
+      <div class="table-container">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Code</th>
+              <th>Type</th>
+              <th>Discount Value</th>
+              <th>Usage Limit</th>
+              <th>Used</th>
+              <th>Valid Until</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <% discounts.forEach(d => { %>
+              <tr>
+                <!-- code -->
+                <td><%= d.code %></td>
+
+                <!-- type (human-readable) -->
+                <td>
+                  <%= d.type === 'percentage'
+                    ? 'Percentage (%)'
+                    : 'Fixed Amount (SGD)' %>
+                </td>
+
+                <!-- discount value -->
+                <td>
+                  <%= d.type === 'percentage'
+                    ? Number(d.value).toFixed(2) + '%'
+                    : 'SGD ' + Number(d.value).toFixed(2) %>
+                </td>
+
+                <!-- usage limit -->
+                <td>
+                  <%= d.usage_limit === 0 ? 'Unlimited' : d.usage_limit %>
+                </td>
+
+                <!-- used -->
+                <td><%= d.used %></td>
+
+                <!-- valid until -->
+                <td>
+                  <%= d.valid_until.toISOString().slice(0, 10) %>
+                </td>
+
+                <!-- status -->
+                <td>
+                  <span class="<%= d.is_active ? 'status-active' : 'status-inactive' %>">
+                    <%= d.is_active ? 'Active' : 'Inactive' %>
+                  </span>
+                </td>
+
+                <!-- actions -->
+                <td>
+                  <a
+                    href="/discounts/edit/<%= d.id %>"
+                    class="btn btn-small btn-link"
+                  >
+                    Edit
+                  </a>
+
+                  <form
+                    action="/discounts/delete/<%= d.id %>"
+                    method="post"
+                    style="display:inline;"
+                  >
+                    <button
+                      type="submit"
+                      class="btn btn-small btn-danger"
+                      onclick="return confirm('Delete this discount?')"
+                    >
+                      Delete
+                    </button>
+                  </form>
+                </td>
+              </tr>
+            <% }) %>
+          </tbody>
+
+        </table>
+      </div>
+
+    </div>
+  </main>
+</div>
+<script src="/js/common.js"></script>
+</body>
+</html>

@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sign Up</title>
+  <link rel="stylesheet" href="/css/signup.css">
+  <link rel="stylesheet" href="/css/desktop.css">
+</head>
+
+<body>
+  <header>
+    <a href="/login" class="logo">
+      <span>🤖 TeleBuy Admin</span>
+    </a>
+  </header>
+
+  <main class="login-container">
+    <div class="signup-box">
+
+      <div class="welcome-text">
+        <h2>Welcome to Telebuy, Your Chat-Based Shopping Hub 💬🛍️</h2>
+      </div>
+
+      <h1>Create Admin Account</h1>
+
+      <% if (typeof error !== 'undefined') { %>
+        <div class="error-message">
+          <p><%= error %></p>
+        </div>
+      <% } %>
+
+      <form action="/signup" method="POST">
+
+        <label for="username">Enter Username:</label>
+        <input type="text" id="username" name="username" required>
+
+        <label for="email">Enter Email:</label>
+        <input type="email" id="email" name="email" required>
+
+        <label for="password">Create Password:</label>
+        <input type="password" id="password" name="password" required>
+
+        <!-- Password Rules -->
+        <ul class="password-rules">
+          <li id="rule-length">8 characters (20 max)</li>
+          <li id="rule-upper">1 uppercase letter</li>
+          <li id="rule-number">1 number</li>
+          <li id="rule-special">1 special character (# ? ! @)</li>
+        </ul>
+
+        <label for="confirmPassword">Re-enter Password:</label>
+        <input type="password" id="confirmPassword" name="confirmPassword" required>
+
+        <p id="password-match" class="password-hint"></p>
+
+
+
+        <button type="submit" id="submitBtn" disabled>
+          Create Admin Account
+        </button>
+
+      </form>
+    </div>
+  </main>
+
+  <!-- ✅ PASSWORD VALIDATION -->
+  <script>
+    const password = document.getElementById('password');
+    const confirmPassword = document.getElementById('confirmPassword');
+    const submitBtn = document.getElementById('submitBtn');
+
+    const ruleLength = document.getElementById('rule-length');
+    const ruleUpper = document.getElementById('rule-upper');
+    const ruleNumber = document.getElementById('rule-number');
+    const ruleSpecial = document.getElementById('rule-special');
+    const matchText = document.getElementById('password-match');
+
+    function validatePassword() {
+      const val = password.value;
+
+      const lengthValid = val.length >= 8 && val.length <= 20;
+      const upperValid = /[A-Z]/.test(val);
+      const numberValid = /\d/.test(val);
+      const specialValid = /[^a-zA-Z0-9]/.test(val);
+
+      ruleLength.classList.toggle('valid', lengthValid);
+      ruleUpper.classList.toggle('valid', upperValid);
+      ruleNumber.classList.toggle('valid', numberValid);
+      ruleSpecial.classList.toggle('valid', specialValid);
+
+      const passwordsMatch = val && val === confirmPassword.value;
+
+        if (!confirmPassword.value) {
+        matchText.style.display = 'none';
+        } else {
+        matchText.style.display = 'block';
+        if (passwordsMatch) {
+            matchText.textContent = 'Passwords match ✅';
+            matchText.classList.add('valid');
+            matchText.classList.remove('invalid');
+        } else {
+            matchText.textContent = 'Passwords do not match ❌';
+            matchText.classList.add('invalid');
+            matchText.classList.remove('valid');
+        }
+        }
+
+
+      submitBtn.disabled = !(lengthValid && upperValid && numberValid && specialValid && passwordsMatch);
+    }
+
+    password.addEventListener('input', validatePassword);
+    confirmPassword.addEventListener('input', validatePassword);
+  </script>
+</body>
+</html>

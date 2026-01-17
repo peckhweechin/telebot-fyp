@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Shopping Cart</title>
+    <link rel="stylesheet" href="/css/cart.css">
+    <link rel="stylesheet" href="/css/desktop.css">
+
+</head>
+<body>
+    <header>
+        <a href="/" class="logo">TELEBUY</a>
+        <div class="actions">
+            <form action="/login" method="get" style="display: inline;">
+                <button>👤</button>
+            </form>   
+            <button>🛒 <span id="cartCount"><%= cartItems.length %></span></button>
+        </div>
+    </header>
+
+    <main class="cart-container">
+        <h1>Shopping Cart</h1>
+        <% if (cartItems.length > 0) { %>
+            <div class="cart-items">
+                <% cartItems.forEach(item => { %>
+                    <div class="cart-item">
+                        <img src="<%= item.image_url %>" alt="<%= item.name %>">
+                        <div class="item-details">
+                            <h2><%= item.name %></h2>
+                            <p>Price: $<%= item.price %></p>
+                            <div class="quantity-controls">
+                                <button onclick="updateQuantity('<%= item.cart_id %>', -1)">-</button>
+                                <span id="quantity-<%= item.cart_id %>"><%= item.quantity %></span>
+                                <button onclick="updateQuantity('<%= item.cart_id %>', 1)">+</button>
+                            </div>
+                        </div>
+                        <button class="remove-item" onclick="removeItem('<%= item.cart_id %>')">🗑️</button>
+                    </div>
+                <% }); %>
+            </div>
+            <div class="cart-summary">
+                <h2>Total: $<span id="total"><%= total.toFixed(2) %></span></h2>
+                <a href="/checkout">
+                    <button class="checkout">Checkout</button>
+                </a>                
+            </div>
+        <% } else { %>
+            <p>Your cart is empty.</p>
+        <% } %>
+    </main>
+
+    <script>
+        function updateQuantity(cartId, change) {
+    const quantitySpan = document.getElementById(`quantity-${cartId}`);
+    let quantity = parseInt(quantitySpan.textContent) + change;
+
+    if (quantity < 1) return;
+
+    fetch('/update-cart', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ cartId, quantity }),
+    })
+    .then(response => response.json())
+    .then(data => {
+
+        if (data.error) {
+            alert(data.error); // show error like: "Only 3 in stock"
+            return;
+        }
+
+        quantitySpan.textContent = quantity;
+        document.getElementById('total').textContent = data.newTotal.toFixed(2);
+    })
+    .catch(error => console.error('Error updating quantity:', error));
+}
+
+        function removeItem(cartId) {
+            fetch('/remove-item', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ cartId }),
+            })
+            .then(response => response.json())
+            .then(() => {
+                location.reload();
+            })
+            .catch(error => console.error('Error removing item:', error));
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Discount - TeleBuy Admin</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-container">
+
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🤖 TeleBuy Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin/homepage" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Home</span>
+                </a>
+                <a href="/admin/categories" class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-text">Categories</span>
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">🛍️</span>
+                            <span class="nav-text">Products</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/admin/products" class="nav-item">All Products</a>
+                        <a href="/admin/inventory" class="nav-item">Inventory</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Customers</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/users" class="nav-item">All Customers</a>
+                        <a href="/segments" class="nav-item">Segments</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-text">Orders</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/orders" class="nav-item">All Orders</a>
+                        <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+                    </div>
+                </div>
+                <a href="/discounts" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Discounts</span>
+                </a>
+                <a href="/analytics" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/liveview" class="nav-item">
+                    <span class="nav-icon">🔴</span>
+                    <span class="nav-text">Live View</span>
+                </a>
+            </nav>
+            <!-- Notifications -->
+            <div class="sidebar-notifications">
+            <div class="notifications-header">
+                <span>Notifications</span>
+                <span class="notifications-count" id="notifCount"></span>
+            </div>
+
+            <div class="notifications-list" id="notificationsList">
+            </div>
+            </div>
+         <form action="/logout" method="POST">
+                <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+            </form>
+        </aside>
+
+
+  <!-- ================= MAIN ================= -->
+  <main class="main-content">
+
+    <header class="content-header">
+      <h1>Edit Discount</h1>
+    </header>
+
+    <div class="content-body">
+
+      <form
+        action="/discounts/edit/<%= discount.id %>"
+        method="post"
+        class="form-card"
+      >
+
+        <!-- CODE -->
+        <div class="form-group">
+          <label>Discount Code *</label>
+          <input
+            type="text"
+            name="code"
+            required
+            value="<%= discount.code %>"
+          >
+        </div>
+
+        <!-- TYPE -->
+        <div class="form-group">
+          <label>Discount Type *</label>
+          <select name="type" required>
+            <option value="percentage"
+              <%= discount.type === 'percentage' ? 'selected' : '' %>>
+              Percentage (%)
+            </option>
+            <option value="fixed"
+              <%= discount.type === 'fixed' ? 'selected' : '' %>>
+              Fixed Amount (SGD)
+            </option>
+          </select>
+        </div>
+
+        <!-- VALUE -->
+        <div class="form-group">
+          <label>Discount Value *</label>
+          <input
+            type="number"
+            name="value"
+            step="0.01"
+            min="0"
+            required
+            value="<%= discount.value %>"
+          >
+        </div>
+
+        <!-- USAGE LIMIT -->
+        <div class="form-group">
+          <label>Usage Limit (0 = Unlimited)</label>
+          <input
+            type="number"
+            name="usage_limit"
+            min="0"
+            value="<%= discount.usage_limit %>"
+          >
+        </div>
+
+        <!-- CATEGORY -->
+        <div class="form-group">
+          <label>Category</label>
+          <select name="category">
+            <option value="">None</option>
+            <option value="new_users"
+              <%= discount.category === 'new_users' ? 'selected' : '' %>>
+              New Users
+            </option>
+            <option value="returning_users"
+              <%= discount.category === 'returning_users' ? 'selected' : '' %>>
+              Returning Users
+            </option>
+            <option value="seasonal"
+              <%= discount.category === 'seasonal' ? 'selected' : '' %>>
+              Seasonal
+            </option>
+            <option value="promotional"
+              <%= discount.category === 'promotional' ? 'selected' : '' %>>
+              Promotional
+            </option>
+          </select>
+        </div>
+
+        <!-- MIN PURCHASE -->
+        <div class="form-group">
+          <label>Minimum Purchase (SGD)</label>
+          <input
+            type="number"
+            name="minimum_purchase"
+            step="0.01"
+            min="0"
+            value="<%= discount.minimum_purchase %>"
+          >
+        </div>
+
+        <!-- DESCRIPTION -->
+        <div class="form-group">
+          <label>Description</label>
+          <textarea
+            name="description"
+            rows="3"
+          ><%= discount.description %></textarea>
+        </div>
+
+        <!-- VALID UNTIL -->
+        <div class="form-group">
+          <label>Valid Until *</label>
+          <input
+            type="date"
+            name="valid_until"
+            required
+            value="<%= discount.valid_until.toISOString().slice(0,10) %>"
+          >
+        </div>
+
+        <!-- ACTIVE -->
+        <div class="form-group checkbox">
+          <label>
+            <input
+              type="checkbox"
+              name="is_active"
+              <%= discount.is_active ? 'checked' : '' %>
+            >
+            Active
+          </label>
+        </div>
+
+        <!-- ACTIONS -->
+        <div class="form-actions">
+          <a href="/discounts" class="btn btn-secondary">
+            Cancel
+          </a>
+          <button type="submit" class="btn btn-primary">
+            Update Discount
+          </button>
+        </div>
+
+      </form>
+
+    </div>
+  </main>
+</div>
+
+</body>
+</html>

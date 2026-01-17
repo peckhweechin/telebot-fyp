@@ -1,0 +1,280 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Home - TeleBot Admin Portal</title>
+    <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-header">
+                <h2>🤖 TeleBuy Admin</h2>
+            </div>
+            <nav class="sidebar-nav">
+                <a href="/admin/homepage" class="nav-item">
+                    <span class="nav-icon">📊</span>
+                    <span class="nav-text">Home</span>
+                </a>
+                <a href="/admin/categories" class="nav-item">
+                    <span class="nav-icon">📁</span>
+                    <span class="nav-text">Categories</span>
+                </a>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">🛍️</span>
+                            <span class="nav-text">Products</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/admin/products" class="nav-item">All Products</a>
+                        <a href="/admin/inventory" class="nav-item">Inventory</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">👥</span>
+                            <span class="nav-text">Customers</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/users" class="nav-item">All Customers</a>
+                        <a href="/segments" class="nav-item">Segments</a>
+                    </div>
+                </div>
+                <div class="nav-dropdown">
+                    <button class="nav-dropdown-toggle">
+                        <div style="display: flex; align-items: center;">
+                            <span class="nav-icon">📦</span>
+                            <span class="nav-text">Orders</span>
+                        </div>
+                        <span class="dropdown-arrow">▶</span>
+                    </button>
+                    <div class="nav-submenu">
+                        <a href="/orders" class="nav-item">All Orders</a>
+                        <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+                    </div>
+                </div>
+                <a href="/discounts" class="nav-item">
+                    <span class="nav-icon">🏷️</span>
+                    <span class="nav-text">Discounts</span>
+                </a>
+                <a href="/analytics" class="nav-item">
+                    <span class="nav-icon">📈</span>
+                    <span class="nav-text">Analytics</span>
+                </a>
+                <a href="/liveview" class="nav-item">
+                    <span class="nav-icon">🔴</span>
+                    <span class="nav-text">Live View</span>
+                </a>
+            </nav>
+            <!-- Notifications -->
+            <div class="sidebar-notifications">
+            <div class="notifications-header">
+                <span>Notifications</span>
+                <span class="notifications-count" id="notifCount"></span>
+            </div>
+
+            <div class="notifications-list" id="notificationsList">
+            </div>
+            </div>
+         <form action="/logout" method="POST">
+                <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+            </form>
+        </aside>
+
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="content-header">
+                <h1>Home</h1>
+                <div class="header-actions">
+                    <div class="user-info">
+                        <span id="adminName">Admin</span>
+                    </div>
+                </div>
+            </header>
+
+            <div class="content-body">
+                <!-- Out of Stock Alert -->
+                <div id="outOfStockAlert" class="alert-banner alert-danger" style="display: none;">
+                <div class="alert-content">
+                    <span class="alert-icon">⚠️</span>
+                    <div class="alert-text">
+                    <strong>Stock Alert!</strong>
+                    <span id="outOfStockMessage"></span>
+                    </div>
+                </div>
+                <button class="alert-close" onclick="this.parentElement.style.display='none'">×</button>
+                </div>
+                <!-- Welcome Card -->
+                <div class="welcome-card">
+                    <div class="welcome-content">
+                        <h2>Congratulations Admin! 🎉</h2>
+                        <p>You are managing the TeleBot e-commerce system</p>
+                        <div class="welcome-stats">
+                            <div class="stat-large">
+                                <h3 id="totalRevenue">$0.00</h3>
+                                <p>Total Revenue</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="welcome-icon">🎁</div>
+                </div>
+
+                <!-- Statistics Cards -->
+                <div class="stats-grid">
+                    <div class="stat-card stat-card-blue">
+                        <div class="stat-card-header">
+                            <span class="stat-icon">🛒</span>
+                            <span class="stat-text">Total Orders</span>
+                        </div>
+                        <h3 id="totalOrders">0</h3>
+                    </div>
+                    <div class="stat-card stat-card-green">
+                        <div class="stat-card-header">
+                            <span class="stat-icon">💰</span>
+                            <span class="stat-text">Total Revenue</span>
+                            <span class="stat-trend positive">+14% ↗</span>
+                        </div>
+                        <h3 id="totalRevenue">$0.00</h3>
+                    </div>
+                    <div class="stat-card stat-card-purple">
+                        <div class="stat-card-header">
+                            <span class="stat-icon">👁️</span>
+                            <span class="stat-text">Product Views</span>
+                        </div>
+                        <h3 id="totalVisits">0</h3>
+                    </div>
+                    <div class="stat-card stat-card-orange">
+                        <div class="stat-card-header">
+                            <span class="stat-icon">📊</span>
+                            <span class="stat-text">Sales Performance</span>
+                        </div>
+                        <h3 id="conversionRate">0%</h3>
+                    </div>
+                </div>
+
+                <!-- Charts Section -->
+                <div class="section-grid">
+                    <div class="card card-large">
+                        <div class="card-header-flex">
+                            <h2>Order Status</h2>
+                            <button class="btn-icon">⋮</button>
+                        </div>
+                        <div class="order-status-chart">
+                            <div class="donut-chart">
+                                <svg viewBox="0 0 200 200" width="200" height="200">
+                                    <circle cx="100" cy="100" r="80" fill="none" stroke="#3b82f6" stroke-width="40" stroke-dasharray="0 502" id="deliveredSlice"/>
+                                    <circle cx="100" cy="100" r="80" fill="none" stroke="#f59e0b" stroke-width="40" stroke-dasharray="0 502" id="processingSlice"/>
+                                    <circle cx="100" cy="100" r="80" fill="none" stroke="#10b981" stroke-width="40" stroke-dasharray="0 502" id="pendingSlice"/>
+                                    <text x="100" y="95" text-anchor="middle" font-size="32" font-weight="bold" fill="#fff">0%</text>
+                                    <text x="100" y="115" text-anchor="middle" font-size="14" fill="#94a3b8">Total Orders</text>
+                                </svg>
+                            </div>
+                            <div class="order-legend">
+                                <div class="legend-item">
+                                    <span class="legend-dot" style="background: #3b82f6;"></span>
+                                    <span>Delivered</span>
+                                    <strong id="deliveredOrders">0</strong>
+                                    <span class="legend-percent" id="deliveredPercent">0%</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot" style="background: #f59e0b;"></span>
+                                    <span>Processing</span>
+                                    <strong id="processingOrders">0</strong>
+                                    <span class="legend-percent" id="processingPercent">0%</span>
+                                </div>
+                                <div class="legend-item">
+                                    <span class="legend-dot" style="background: #10b981;"></span>
+                                    <span>Pending</span>
+                                    <strong id="pendingOrders">0</strong>
+                                    <span class="legend-percent" id="pendingPercent">0%</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card card-large">
+                        <div class="card-header-flex">
+                            <h2>Sales & Products</h2>
+                            <button class="btn-icon">⋮</button>
+                        </div>
+                        <div class="bar-chart-container">
+                            <canvas id="salesBarChart" height="250"></canvas>
+                        </div>
+                        <div class="chart-legend-horizontal">
+                            <div class="legend-item-h">
+                                <span class="legend-dot" style="background: #f59e0b;"></span>
+                                <span>Products</span>
+                            </div>
+                            <div class="legend-item-h">
+                                <span class="legend-dot" style="background: #3b82f6;"></span>
+                                <span>Categories</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Bottom Section -->
+                <div class="section-grid">
+                    <div class="card">
+                            <div class="quick-stats">
+                                <div class="quick-stat-item">
+                                    <strong id="totalProducts">0</strong>
+                                    <p>Total Products</p>
+                                </div>
+                                <div class="quick-stat-item">
+                                    <strong id="totalCategories">0</strong>
+                                    <p>Categories</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="card">
+                        <h2>Low Stock Alert</h2>
+                        <div id="lowStockList" class="list-container-modern">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Orders -->
+                <div class="card">
+                    <h2>Recent Orders</h2>
+                    <div class="table-container">
+                        <table class="data-table">
+                            <thead>
+                                <tr>
+                                    <th>Order #</th>
+                                    <th>Customer</th>
+                                    <th>Items</th>
+                                    <th>Amount</th>
+                                    <th>Status</th>
+                                    <th>Date</th>
+                                </tr>
+                            </thead>
+                            <tbody id="recentOrdersTable">
+                                <tr>
+                                    <td colspan="6" class="text-center">Loading...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+
+    <script src="/js/common.js"></script>
+    <script src="/js/dashboard.js"></script>
+
+
+</body>
+</html>
