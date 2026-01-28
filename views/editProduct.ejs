@@ -114,6 +114,30 @@
             <div id="error-name" class="field-error"></div>
           </div>
 
+          <div class="form-group">
+            <label style="display:flex;justify-content:space-between;align-items:center;">
+              Description
+              <button
+                type="button"
+                class="btn btn-sm btn-secondary"
+                id="generateDescBtn"
+              >
+                ✨ Generate
+              </button>
+            </label>
+
+            <textarea
+              name="description"
+              id="productDescription"
+              rows="4"
+            ><%= product.description || '' %></textarea>
+          </div>  
+
+          <small
+              id="descHint"
+              style="display:none;margin-top:6px;color:#475569;font-size:12px;"
+          ></small>
+
           <!-- Price and Quantity -->
           <div class="form-row">
             <div class="form-group">
@@ -122,7 +146,14 @@
             </div>
             <div class="form-group">
               <label>Quantity</label>
-              <input type="number" name="quantity" min="0" value="<%= product.quantity %>" required>
+              <input
+                type="number"
+                name="quantity"
+                min="0"
+                max="1000"
+                value="<%= product.quantity %>"
+                required
+              >
             </div>
           </div>
 
@@ -142,7 +173,7 @@
             <div class="image-preview" id="existingImagesPreview">
               <% if (product.images && product.images.length) { %>
                 <% product.images.forEach(function(img) { %>
-                  <div class="draggable-img" data-id="<%= img.id %>">
+                  <div class="draggable-img <%= img.image_url === product.image_url ? 'is-cover' : '' %>" data-id="<%= img.id %>">
                     <img src="<%= img.image_url %>" alt="Product Image">
                     <% if (img.image_url === product.image_url) { %>
                       <div class="cover-badge">COVER</div>
@@ -196,63 +227,115 @@
   let removedImages = [];
   let newFiles = [];
 
-  // --- EXISTING IMAGES: remove, drag, set cover ---
+  // ===== COVER UI =====
   function updateCoverLabels() {
     const wrappers = Array.from(existingImagesPreview.children);
-    wrappers.forEach((w, i) => {
-      let badge = w.querySelector('.cover-badge');
-      if (i === 0) {
-        if (!badge) {
-          badge = document.createElement('div');
-          badge.classList.add('cover-badge');
-          badge.textContent = 'COVER';
-          w.appendChild(badge);
-        } else {
-          badge.textContent = 'COVER';
-        }
-        w.querySelector('img').style.border = '2px solid #007BFF';
-      } else {
-        if (badge) badge.textContent = '';
-        w.querySelector('img').style.border = '1px solid #ccc';
-      }
+
+    // clear all badges/borders
+    wrappers.forEach(w => {
+      w.classList.remove('is-cover');
+      const badge = w.querySelector('.cover-badge');
+      if (badge) badge.remove();
+      const img = w.querySelector('img');
+      if (img) img.style.border = '1px solid #ccc';
     });
+
+    // choose cover: the one marked is-cover, else first
+    const coverWrapper = wrappers.find(w => w.classList.contains('is-cover')) || wrappers[0];
+    if (!coverWrapper) return;
+
+    coverWrapper.classList.add('is-cover');
+
+    const badge = document.createElement('div');
+    badge.classList.add('cover-badge');
+    badge.textContent = 'COVER';
+    coverWrapper.appendChild(badge);
+
+    const coverImg = coverWrapper.querySelector('img');
+    if (coverImg) coverImg.style.border = '2px solid #007BFF';
   }
 
-  // Remove existing image
+  // ===== EXISTING: DELETE IMAGE (FIXED) =====
   existingImagesPreview.addEventListener('click', e => {
-    if (e.target.classList.contains('remove-existing')) {
-      const wrapper = e.target.parentElement;
-      removedImages.push(wrapper.getAttribute('data-id'));
-      removedImagesInput.value = removedImages.join(',');
-      wrapper.remove();
-      updateCoverLabels();
+    const removeBtn = e.target.closest('.remove-existing');
+    if (!removeBtn) return;
+
+    const wrapper = removeBtn.closest('.draggable-img');
+    if (!wrapper) return;
+
+    removedImages.push(wrapper.getAttribute('data-id'));
+    removedImagesInput.value = removedImages.join(',');
+
+    // if deleting the current cover, move cover to first remaining after delete
+    const wasCover = wrapper.classList.contains('is-cover');
+
+    wrapper.remove();
+
+    if (wasCover) {
+      const left = Array.from(existingImagesPreview.children);
+      if (left.length) left[0].classList.add('is-cover');
     }
+
+    updateCoverLabels();
   });
 
-  // Make existing images draggable
+  // ===== EXISTING: CLICK IMAGE TO SET COVER (FIXED - doesn't block delete) =====
+  existingImagesPreview.addEventListener('click', e => {
+    if (e.target.closest('.remove-existing')) return; // don't treat delete click as cover click
+
+    const wrapper = e.target.closest('.draggable-img');
+    if (!wrapper) return;
+
+    Array.from(existingImagesPreview.children).forEach(w => w.classList.remove('is-cover'));
+    wrapper.classList.add('is-cover');
+    updateCoverLabels();
+  });
+
+  // ===== EXISTING: DRAG REORDER (keeps cover on moved item if it was cover) =====
   Array.from(existingImagesPreview.children).forEach(w => {
     w.draggable = true;
-    w.addEventListener('dragstart', e => e.dataTransfer.setData('text/plain', Array.from(existingImagesPreview.children).indexOf(w)));
+
+    w.addEventListener('dragstart', e => {
+      e.dataTransfer.setData('text/plain', Array.from(existingImagesPreview.children).indexOf(w));
+    });
+
     w.addEventListener('dragover', e => e.preventDefault());
+
     w.addEventListener('drop', e => {
       e.preventDefault();
       const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
       const toIndex = Array.from(existingImagesPreview.children).indexOf(w);
+
       const children = Array.from(existingImagesPreview.children);
       const moved = children[fromIndex];
+
+      const wasCover = moved.classList.contains('is-cover');
+
       existingImagesPreview.removeChild(moved);
       if (fromIndex < toIndex) {
         existingImagesPreview.insertBefore(moved, children[toIndex].nextSibling);
       } else {
         existingImagesPreview.insertBefore(moved, children[toIndex]);
       }
+
+      // restore cover class on the moved element if it was cover
+      Array.from(existingImagesPreview.children).forEach(x => x.classList.remove('is-cover'));
+      if (wasCover) {
+        moved.classList.add('is-cover');
+      } else {
+        // if no element has is-cover, keep current first as cover
+        const currentCover = Array.from(existingImagesPreview.children).find(x => x.classList.contains('is-cover'));
+        if (!currentCover && existingImagesPreview.children.length) existingImagesPreview.children[0].classList.add('is-cover');
+      }
+
       updateCoverLabels();
     });
   });
 
+  // init cover ui (use server's is-cover)
   updateCoverLabels();
 
-  // --- NEW IMAGES PREVIEW ---
+  // ===== NEW IMAGES PREVIEW =====
   imageInput.addEventListener('change', () => {
     newFiles = Array.from(imageInput.files);
     newImagePreview.innerHTML = '';
@@ -281,9 +364,11 @@
       removeBtn.onclick = () => {
         newFiles.splice(index, 1);
         wrapper.remove();
+
         const dt = new DataTransfer();
         newFiles.forEach(f => dt.items.add(f));
         imageInput.files = dt.files;
+
         updateNewImageCoverLabels();
       };
       wrapper.appendChild(removeBtn);
@@ -295,17 +380,16 @@
         e.preventDefault();
         const fromIndex = parseInt(e.dataTransfer.getData('text/plain'));
         const toIndex = Array.from(newImagePreview.children).indexOf(wrapper);
+
         const moved = newFiles.splice(fromIndex, 1)[0];
         newFiles.splice(toIndex, 0, moved);
 
-        if (fromIndex < toIndex) {
-          newImagePreview.insertBefore(newImagePreview.children[fromIndex], newImagePreview.children[toIndex].nextSibling);
-        } else {
-          newImagePreview.insertBefore(newImagePreview.children[fromIndex], newImagePreview.children[toIndex]);
-        }
         const dt = new DataTransfer();
         newFiles.forEach(f => dt.items.add(f));
         imageInput.files = dt.files;
+
+        // rebuild preview quickly by triggering change (optional)
+        // but we can just update labels
         updateNewImageCoverLabels();
       });
 
@@ -317,12 +401,13 @@
     const wrappers = Array.from(newImagePreview.children);
     wrappers.forEach((w, i) => {
       const label = w.querySelector('.cover-badge');
-      label.textContent = i === 0 ? 'Cover' : '';
-      w.querySelector('img').style.border = i === 0 ? '2px solid #007BFF' : '1px solid #ccc';
+      if (label) label.textContent = i === 0 ? 'Cover' : '';
+      const img = w.querySelector('img');
+      if (img) img.style.border = i === 0 ? '2px solid #007BFF' : '1px solid #ccc';
     });
   }
 
-  // --- DUPLICATE NAME CHECK (AJAX) ---
+  // ===== DUPLICATE NAME CHECK =====
   productNameInput.addEventListener('blur', async () => {
     const name = productNameInput.value.trim();
     if (!name) return;
@@ -339,10 +424,9 @@
     }
   });
 
-  // --- FORM SUBMIT ---
+  // ===== FORM SUBMIT (IMPORTANT FIXES) =====
   const editForm = document.getElementById('editProductForm');
   editForm.addEventListener('submit', e => {
-    // Prevent submission if duplicate name
     if (nameExists) {
       e.preventDefault();
       document.getElementById('error-name').textContent = 'A product with a similar name already exists.';
@@ -350,27 +434,29 @@
       return;
     }
 
-    // Set cover for existing images
-    const existingIds = Array.from(existingImagesPreview.children)
-      .map(w => w.getAttribute('data-id'))
-      .filter(id => id && !removedImages.includes(id));
+    // ensure coverImageId exists once (avoid duplicates)
+    const oldCoverInput = editForm.querySelector('input[name="coverImageId"]');
+    if (oldCoverInput) oldCoverInput.remove();
 
-    const coverId = existingIds[0] || null;
+    const coverWrapper = Array.from(existingImagesPreview.children).find(w => w.classList.contains('is-cover'))
+      || existingImagesPreview.children[0];
+
+    const coverId = coverWrapper ? coverWrapper.getAttribute('data-id') : '';
     const coverInput = document.createElement('input');
     coverInput.type = 'hidden';
     coverInput.name = 'coverImageId';
     coverInput.value = coverId;
     editForm.appendChild(coverInput);
 
-    // Append newFiles in order to FormData (if needed)
-    const formData = new FormData(editForm);
-    newFiles.forEach(f => formData.append('images', f));
-
-    // Submit via fetch (optional) or just let form submit normally
-    // editForm.submit(); // default form submit
+    // ✅ make sure the real file input matches newFiles order
+    if (newFiles && newFiles.length) {
+      const dt = new DataTransfer();
+      newFiles.forEach(f => dt.items.add(f));
+      imageInput.files = dt.files;
+    }
   });
 
-  // --- DELETE PRODUCT LOGIC ---
+  // ===== DELETE PRODUCT =====
   const deleteBtn = document.getElementById('deleteBtn');
   const deleteConfirm = document.getElementById('deleteConfirm');
   const confirmDelete = document.getElementById('confirmDelete');
@@ -388,6 +474,41 @@
   });
 
   confirmDelete.addEventListener('click', () => deleteForm.submit());
+
+// ===== SMART DESCRIPTION GENERATOR (NO POPUPS) =====
+const generateDescBtn = document.getElementById('generateDescBtn');
+const productDescription = document.getElementById('productDescription');
+const descHint = document.getElementById('descHint');
+
+generateDescBtn.addEventListener('click', () => {
+  const productName = productNameInput.value.trim();
+  if (!productName) {
+    descHint.textContent = 'Please enter a product name first.';
+    descHint.style.display = 'block';
+    descHint.style.color = '#dc2626';
+    return;
+  }
+
+  const categorySelect = document.querySelector('select[name="category_id"]');
+  const categoryName =
+    categorySelect?.selectedOptions?.[0]?.text || 'this category';
+
+  const templates = [
+    `Premium ${productName} designed for everyday use. Crafted with quality materials to deliver reliability and long-lasting performance.`,
+    `${productName} is a high-quality product ideal for daily use. Perfect for customers looking for value and durability in ${categoryName}.`,
+    `Upgrade your experience with ${productName}. A reliable and well-designed item suitable for various everyday needs.`,
+    `${productName} offers dependable performance and a clean design, making it a great choice for customers shopping in ${categoryName}.`
+  ];
+
+  const generated =
+    templates[Math.floor(Math.random() * templates.length)];
+
+  productDescription.value = generated;
+
+  descHint.textContent = '✨ Description generated. You can edit it before saving.';
+  descHint.style.display = 'block';
+  descHint.style.color = '#2563eb';
+});
 </script>
 
 </body>

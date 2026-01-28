@@ -1,16 +1,13 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Add Category - TeleBot Admin</title>
-
-  <link rel="stylesheet" href="/css/style.css">
-  <link rel="stylesheet" href="/css/addcategories.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Update Stock</title>
+  <link rel="stylesheet" href="/css/style.css" />
 </head>
 <body>
-
-<div class="app-container">
+    <div class="app-container">
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -91,67 +88,40 @@
                 <button type="submit" class="btn btn-secondary btn-block">Logout</button>
             </form>
         </aside>
+<body>
+  <div class="app-container">
+    <main class="main-content">
+      <header class="content-header">
+        <h1>Update Stock</h1>
+      </header>
 
+      <div class="table-container" style="max-width: 500px;">
+        <p><strong>Product:</strong> <%= product.name %></p>
+        <p><strong>Current Stock:</strong> <%= product.stock %></p>
 
+        <% if (error) { %>
+          <p style="color:red;"><%= error %></p>
+        <% } %>
 
-  <!-- ===== MAIN CONTENT ===== -->
-  <main class="main-content">
-
-    <header class="content-header">
-      <h1>Add Category</h1>
-    </header>
-
-    <div class="content-body">
-
-      <div class="card form-card">
-        <form action="/admin/categories/add" method="POST">
-
-        <div class="form-group">
-            <label for="name">Category Name *</label>
-            <input
-                type="text"
-                id="name"
-                name="name"
-                value="<%= typeof oldData !== 'undefined' ? oldData.name : '' %>"
-                required
-            >
-
-            <% if (typeof error !== 'undefined' && error) { %>
-                <div class="field-error" style="color:red; font-size:13px; margin-top:4px;">
-                    <%= error %>
-                </div>
-            <% } %>
-        </div>
-
+        <form method="POST" action="/admin/inventory/update/<%= product.id %>">
           <div class="form-group">
-            <label for="description">Description</label>
-            <textarea id="description" name="description" rows="4"></textarea>
+            <label>New Stock</label>
+            <input
+              type="number"
+              name="stock"
+              min="0"
+              value="<%= product.stock %>"
+              required
+            />
           </div>
 
-          <div class="form-group checkbox-group">
-            <label>
-              <input type="checkbox" name="is_active" checked>
-              Active
-            </label>
+          <div style="margin-top: 15px;">
+            <button type="submit" class="btn btn-primary">Save</button>
+            <a href="/admin/inventory" class="btn btn-secondary">Cancel</a>
           </div>
-
-          <div class="form-actions">
-            <a href="/admin/categories" class="btn btn-secondary">
-              Cancel
-            </a>
-
-            <button type="submit" class="btn btn-primary">
-              Save Category
-            </button>
-          </div>
-
         </form>
       </div>
-
-    </div>
-  </main>
-
-</div>
-    <script src="/js/common.js"></script>
+    </main>
+  </div>
 </body>
 </html>

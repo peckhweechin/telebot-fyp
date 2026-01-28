@@ -5,118 +5,145 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Products - TeleBot Admin Portal</title>
   <link rel="stylesheet" href="/css/style.css">
+
+  <style>
+    .search-container input {
+      width: 100%;
+      max-width: 420px;
+      padding: 10px 14px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      font-size: 14px;
+    }
+    .search-container input:focus {
+      outline: none;
+      border-color: var(--primary-color);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.10);
+    }
+  </style>
 </head>
 <body>
 
 <div class="app-container">
-        <!-- Sidebar -->
-        <aside class="sidebar">
-            <div class="sidebar-header">
-                <h2>🤖 TeleBuy Admin</h2>
-            </div>
-            <nav class="sidebar-nav">
-                <a href="/admin/homepage" class="nav-item">
-                    <span class="nav-icon">📊</span>
-                    <span class="nav-text">Home</span>
-                </a>
-                <a href="/admin/categories" class="nav-item">
-                    <span class="nav-icon">📁</span>
-                    <span class="nav-text">Categories</span>
-                </a>
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-toggle">
-                        <div style="display: flex; align-items: center;">
-                            <span class="nav-icon">🛍️</span>
-                            <span class="nav-text">Products</span>
-                        </div>
-                        <span class="dropdown-arrow">▶</span>
-                    </button>
-                    <div class="nav-submenu">
-                        <a href="/admin/products" class="nav-item">All Products</a>
-                        <a href="/admin/inventory" class="nav-item">Inventory</a>
-                    </div>
-                </div>
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-toggle">
-                        <div style="display: flex; align-items: center;">
-                            <span class="nav-icon">👥</span>
-                            <span class="nav-text">Customers</span>
-                        </div>
-                        <span class="dropdown-arrow">▶</span>
-                    </button>
-                    <div class="nav-submenu">
-                        <a href="/users" class="nav-item">All Customers</a>
-                        <a href="/segments" class="nav-item">Segments</a>
-                    </div>
-                </div>
-                <div class="nav-dropdown">
-                    <button class="nav-dropdown-toggle">
-                        <div style="display: flex; align-items: center;">
-                            <span class="nav-icon">📦</span>
-                            <span class="nav-text">Orders</span>
-                        </div>
-                        <span class="dropdown-arrow">▶</span>
-                    </button>
-                    <div class="nav-submenu">
-                        <a href="/orders" class="nav-item">All Orders</a>
-                        <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
-                    </div>
-                </div>
-                <a href="/discounts" class="nav-item">
-                    <span class="nav-icon">🏷️</span>
-                    <span class="nav-text">Discounts</span>
-                </a>
-                <a href="/analytics" class="nav-item">
-                    <span class="nav-icon">📈</span>
-                    <span class="nav-text">Analytics</span>
-                </a>
-                <a href="/liveview" class="nav-item">
-                    <span class="nav-icon">🔴</span>
-                    <span class="nav-text">Live View</span>
-                </a>
-            </nav>
-            <!-- Notifications -->
-            <div class="sidebar-notifications">
-            <div class="notifications-header">
-                <span>Notifications</span>
-                <span class="notifications-count" id="notifCount"></span>
-            </div>
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>🤖 TeleBuy Admin</h2>
+    </div>
 
-            <div class="notifications-list" id="notificationsList">
-            </div>
-            </div>
-         <form action="/logout" method="POST">
-                <button type="submit" class="btn btn-secondary btn-block">Logout</button>
-            </form>
-        </aside>
+    <nav class="sidebar-nav">
+      <a href="/admin/homepage" class="nav-item">
+        <span class="nav-icon">📊</span>
+        <span class="nav-text">Home</span>
+      </a>
 
+      <a href="/admin/categories" class="nav-item">
+        <span class="nav-icon">📁</span>
+        <span class="nav-text">Categories</span>
+      </a>
 
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle active" type="button">
+          <div style="display:flex;align-items:center;">
+            <span class="nav-icon">🛍️</span>
+            <span class="nav-text">Products</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/admin/products" class="nav-item active">All Products</a>
+          <a href="/admin/inventory" class="nav-item">Inventory</a>
+        </div>
+      </div>
 
-  <!-- ================= MAIN ================= -->
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle" type="button">
+          <div style="display:flex;align-items:center;">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">Customers</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/users" class="nav-item">All Customers</a>
+          <a href="/segments" class="nav-item">Segments</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle" type="button">
+          <div style="display:flex;align-items:center;">
+            <span class="nav-icon">📦</span>
+            <span class="nav-text">Orders</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/orders" class="nav-item">All Orders</a>
+          <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+        </div>
+      </div>
+
+      <a href="/discounts" class="nav-item">
+        <span class="nav-icon">🏷️</span>
+        <span class="nav-text">Discounts</span>
+      </a>
+
+      <a href="/analytics" class="nav-item">
+        <span class="nav-icon">📈</span>
+        <span class="nav-text">Analytics</span>
+      </a>
+
+      <a href="/liveview" class="nav-item">
+        <span class="nav-icon">🔴</span>
+        <span class="nav-text">Live View</span>
+      </a>
+    </nav>
+
+    <div class="sidebar-notifications">
+      <div class="notifications-header">
+        <span>Notifications</span>
+        <span class="notifications-count" id="notifCount"></span>
+      </div>
+      <div class="notifications-list" id="notificationsList"></div>
+    </div>
+
+    <form action="/logout" method="POST">
+      <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+    </form>
+  </aside>
+
+  <!-- MAIN -->
   <main class="main-content">
-
     <header class="content-header">
-      <h1>Products</h1>
+      <h1>
+        <a href="/admin/products" class="page-title-link">Products</a>
+      </h1>
 
       <div class="header-actions">
-        <a href="/admin/addproduct" class="btn btn-primary">
-          + Add Product
-        </a>
+        <a href="/admin/addproduct" class="btn btn-primary">+ Add Product</a>
       </div>
     </header>
 
     <div class="content-body">
 
-      <!-- ================= PRODUCTS LIST ================= -->
-      <div class="search-container" style="margin-bottom:20px;">
+      <%
+        const qs =
+          (q ? '&q=' + encodeURIComponent(q) : '') +
+          (categoryId ? '&category_id=' + encodeURIComponent(categoryId) : '');
+      %>
+
+      <!-- ✅ Live Search (smaller, no button, like Categories) -->
+      <div class="search-container" style="margin-bottom: 20px;">
         <input
           type="text"
           id="searchProducts"
           placeholder="🔍 Search products..."
-          style="width:100%;max-width:400px;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;"
+          value="<%= q || '' %>"
         >
       </div>
 
+      <!-- Products Table -->
       <div class="card">
         <div class="table-container">
           <table class="data-table">
@@ -124,6 +151,7 @@
               <tr>
                 <th>Image</th>
                 <th>Name</th>
+                <th>Description</th>
                 <th>Category</th>
                 <th>Price</th>
                 <th>Stock</th>
@@ -132,32 +160,57 @@
               </tr>
             </thead>
 
+            <!-- ✅ added id for live filtering -->
             <tbody id="productsTable">
-              <% if (products.length === 0) { %>
+              <% if (!products || products.length === 0) { %>
                 <tr>
-                  <td colspan="7" class="text-center">No products found</td>
+                  <td colspan="8" class="text-center text-muted">No products found</td>
                 </tr>
               <% } else { %>
                 <% products.forEach(p => { %>
                   <tr>
                     <td>
                       <% if (p.image_url) { %>
-                        <img src="<%= p.image_url %>" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
+                        <img src="<%= p.image_url %>" alt="Product" style="width:40px;height:40px;object-fit:cover;border-radius:6px;">
                       <% } else { %>
-                        —
+                        <span class="text-muted">—</span>
                       <% } %>
                     </td>
+
                     <td><%= p.name %></td>
-                    <td><%= p.category_name || '-' %></td>
-                    <td>$<%= Number(p.price).toFixed(2) %></td>
-                    <td><%= p.stock %></td>
-                    <td>
-                      <span class="<%= p.is_active ? 'status-active' : 'status-inactive' %>">
-                        <%= p.is_active ? 'Active' : 'Inactive' %>
-                      </span>
+
+                    <td class="text-muted">
+                      <%= (p.description || '').length > 60 ? (p.description || '').slice(0, 60) + '...' : (p.description || '') %>
                     </td>
+
                     <td>
-                     <a href="/admin/editproduct/<%= p.id %>" class="btn btn-sm">Edit</a>
+                      <% if (p.category_id) { %>
+                        <a
+                          class="category-link"
+                          href="/admin/products?category_id=<%= p.category_id %>"
+                          title="View all products in this category"
+                      >
+                        <%= p.category_name || '-' %>
+                      </a>
+                    <% } else { %>
+                      -
+                    <% } %>
+                  </td>
+
+                    <td>$<%= Number(p.price || 0).toFixed(2) %></td>
+
+                    <td><%= p.stock %></td>
+
+                    <td>
+                      <% if (p.is_active) { %>
+                        <span class="badge badge-success">Active</span>
+                      <% } else { %>
+                        <span class="badge badge-secondary">Inactive</span>
+                      <% } %>
+                    </td>
+
+                    <td>
+                      <a href="/admin/editproduct/<%= p.id %>" class="btn btn-sm btn-primary">Edit</a>
                     </td>
                   </tr>
                 <% }) %>
@@ -165,28 +218,92 @@
             </tbody>
           </table>
         </div>
-      </div>
 
+        <!-- Pagination (unchanged) -->
+        <% if (totalPages && totalPages > 1) { %>
+          <div class="pagination-container">
+            <div class="pagination">
+
+              <% if (page > 1) { %>
+                <a class="pagination-btn" href="/admin/products?page=<%= page - 1 %><%= q ? '&q=' + encodeURIComponent(q) : '' %>">Prev</a>
+              <% } else { %>
+                <span class="pagination-btn disabled">Prev</span>
+              <% } %>
+
+              <%
+                let startPage = Math.max(1, page - 2);
+                let endPage = Math.min(totalPages, page + 2);
+
+                if (endPage - startPage < 4) {
+                  startPage = Math.max(1, endPage - 4);
+                  endPage = Math.min(totalPages, startPage + 4);
+                }
+              %>
+
+              <% if (startPage > 1) { %>
+                <a class="pagination-btn" href="/admin/products?page=1<%= q ? '&q=' + encodeURIComponent(q) : '' %>">1</a>
+                <% if (startPage > 2) { %>
+                  <span class="pagination-dots">…</span>
+                <% } %>
+              <% } %>
+
+              <% for (let i = startPage; i <= endPage; i++) { %>
+                <a
+                  class="pagination-btn <%= i === page ? 'active' : '' %>"
+                  href="/admin/products?page=<%= i %><%= qs %>"
+                ><%= i %></a>
+              <% } %>
+
+              <% if (endPage < totalPages) { %>
+                <% if (endPage < totalPages - 1) { %>
+                  <span class="pagination-dots">…</span>
+                <% } %>
+                <a class="pagination-btn" href="/admin/products?page=<%= totalPages %><%= q ? '&q=' + encodeURIComponent(q) : '' %>"><%= totalPages %></a>
+              <% } %>
+
+              <% if (page < totalPages) { %>
+                <a class="pagination-btn" href="/admin/products?page=<%= page + 1 %><%= q ? '&q=' + encodeURIComponent(q) : '' %>">Next</a>
+              <% } else { %>
+                <span class="pagination-btn disabled">Next</span>
+              <% } %>
+
+            </div>
+          </div>
+        <% } %>
+      </div>
     </div>
   </main>
-
 </div>
+
 <script>
-  const searchInput = document.getElementById('searchProducts');
-  const tableBody = document.getElementById('productsTable');
+  // ✅ Live filter (like Categories page)
+  const searchProducts = document.getElementById('searchProducts');
+  const productsTable = document.getElementById('productsTable');
 
-  searchInput.addEventListener('input', function () {
-    const value = this.value.toLowerCase();
-    const rows = tableBody.getElementsByTagName('tr');
+  function filterProducts() {
+    const value = (searchProducts.value || '').toLowerCase().trim();
+    const rows = productsTable.querySelectorAll('tr');
 
-    Array.from(rows).forEach(row => {
+    rows.forEach(row => {
+      // keep the "No products found" row visible if it exists
+      const colspanCell = row.querySelector('td[colspan]');
+      if (colspanCell) {
+        // show it only if there are no real rows OR search doesn't match anything
+        // (simple behaviour: hide it when typing anything)
+        row.style.display = value ? 'none' : '';
+        return;
+      }
+
       const text = row.innerText.toLowerCase();
       row.style.display = text.includes(value) ? '' : 'none';
     });
-  });
-</script>
-    <script src="/js/common.js"></script>
-    <script src="/js/dashboard.js"></script>
+  }
 
+  searchProducts.addEventListener('input', filterProducts);
+  window.addEventListener('DOMContentLoaded', filterProducts);
+</script>
+
+<script src="/js/common.js"></script>
+<script src="/js/dashboard.js"></script>
 </body>
 </html>

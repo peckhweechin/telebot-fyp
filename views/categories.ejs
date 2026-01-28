@@ -8,7 +8,8 @@
 </head>
 <body>
 
-  <div class="app-container">
+<div class="app-container">
+
         <!-- Sidebar -->
         <aside class="sidebar">
             <div class="sidebar-header">
@@ -91,79 +92,184 @@
         </aside>
 
 
-    <!-- ===== MAIN CONTENT ===== -->
-    <main class="main-content">
+  <!-- MAIN -->
+  <main class="main-content">
 
-      <header class="content-header">
-        <h1>Categories</h1>
+    <header class="content-header">
+      <h1>
+        <a href="/admin/categories" class="page-title-link">Categories</a>
+      </h1>
 
-        <div class="header-actions">
-          <a href="/admin/categories/add" class="btn btn-primary">
-            + Add Category
-          </a>
+      <div class="header-actions">
+        <a href="/admin/categories/add" class="btn btn-primary">+ Add Category</a>
+      </div>
+    </header>
 
-        </div>
-      </header>
+    <div class="content-body">
 
-      <div class="content-body">
+      <!-- Search -->
+      <div class="search-container" style="margin-bottom:20px;">
+        <input
+          type="text"
+          id="searchCategories"
+          placeholder="🔍 Search categories..."
+          style="width:100%;max-width:400px;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;"
+        >
+      </div>
 
-        <div class="search-container" style="margin-bottom: 20px;">
-          <input
-            type="text"
-            id="searchCategories"
-            placeholder="🔍 Search categories..."
-            style="width:100%;max-width:400px;padding:10px 14px;border:1px solid #e2e8f0;border-radius:8px;font-size:14px;"
-          >
-        </div>
+      <!-- Table -->
+      <div class="card">
+        <div class="table-container">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Status</th>
+                <th>Created</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
 
-        <div class="card">
-          <div class="table-container">
-            <table class="data-table">
-              <thead>
+            <tbody id="categoriesTable">
+              <% if (!categories || categories.length === 0) { %>
                 <tr>
-                  <th>Name</th>
-                  <th>Description</th>
-                  <th>Status</th>
-                  <th>Created</th>
-                  <th>Actions</th>
+                  <td colspan="5" class="text-center">No categories found</td>
                 </tr>
-              </thead>
-
-              <tbody id="categoriesTable">
-                <% if (categories.length === 0) { %>
+              <% } else { %>
+                <% categories.forEach(cat => { %>
                   <tr>
-                    <td colspan="5" class="text-center">No categories found</td>
-                  </tr>
-                <% } else { %>
-                  <% categories.forEach(cat => { %>
-                    <tr>
-                      <td><%= cat.name %></td>
-                      <td><%= cat.description || '-' %></td>
-                      <td>
-                        <span class="<%= cat.is_active ? 'status-active' : 'status-inactive' %>">
-                          <%= cat.is_active ? 'Active' : 'Inactive' %>
-                        </span>
-                      </td>
-                      <td><%= new Date(cat.created_at).toLocaleDateString() %></td>
-                      <td>
-                        <a href="/admin/categories/edit/<%= cat.id %>" class="btn btn-sm">Edit</a>
-                      </td>
-                    </tr>
-                  <% }) %>
-                <% } %>
-              </tbody>
-            </table>
+                    <td>
+                      <a class="category-link" href="/admin/products?category_id=<%= cat.id %>">
+                        <%= cat.name %>
+                      </a>
+                    </td>
 
-          </div>
-          <div class="pagination-container" id="paginationContainer">
-            <div class="pagination" id="pagination"></div>
-          </div>
+                    <td><%= cat.description || '-' %></td>
+
+                    <td>
+                      <span class="<%= cat.is_active ? 'status-active' : 'status-inactive' %>">
+                        <%= cat.is_active ? 'Active' : 'Inactive' %>
+                      </span>
+                    </td>
+
+                    <td><%= new Date(cat.created_at).toLocaleDateString() %></td>
+
+                    <td>
+                      <a href="/admin/categories/edit/<%= cat.id %>" class="btn btn-sm btn-primary">
+                        Edit
+                      </a>
+                    </td>
+                  </tr>
+                <% }) %>
+              <% } %>
+            </tbody>
+          </table>
         </div>
+
+        <!-- Pagination (SAME AS PRODUCTS) -->
+        <% if (totalPages && totalPages > 1) { %>
+          <div class="pagination-container">
+            <div class="pagination">
+
+              <% if (page > 1) { %>
+                <a class="pagination-btn" href="/admin/categories?page=<%= page - 1 %>">Prev</a>
+              <% } else { %>
+                <span class="pagination-btn disabled">Prev</span>
+              <% } %>
+
+              <%
+                let startPage = Math.max(1, page - 2);
+                let endPage = Math.min(totalPages, page + 2);
+
+                if (endPage - startPage < 4) {
+                  startPage = Math.max(1, endPage - 4);
+                  endPage = Math.min(totalPages, startPage + 4);
+                }
+              %>
+
+              <% if (startPage > 1) { %>
+                <a class="pagination-btn" href="/admin/categories?page=1">1</a>
+                <% if (startPage > 2) { %>
+                  <span class="pagination-dots">…</span>
+                <% } %>
+              <% } %>
+
+              <% for (let i = startPage; i <= endPage; i++) { %>
+                <a
+                  class="pagination-btn <%= i === page ? 'active' : '' %>"
+                  href="/admin/categories?page=<%= i %>"
+                ><%= i %></a>
+              <% } %>
+
+              <% if (endPage < totalPages) { %>
+                <% if (endPage < totalPages - 1) { %>
+                  <span class="pagination-dots">…</span>
+                <% } %>
+                <a class="pagination-btn" href="/admin/categories?page=<%= totalPages %>">
+                  <%= totalPages %>
+                </a>
+              <% } %>
+
+              <% if (page < totalPages) { %>
+                <a class="pagination-btn" href="/admin/categories?page=<%= page + 1 %>">Next</a>
+              <% } else { %>
+                <span class="pagination-btn disabled">Next</span>
+              <% } %>
+
+            </div>
+          </div>
+        <% } %>
+        
+<!-- ================= INACTIVE CATEGORIES ================= -->
+<% if (inactiveCategories && inactiveCategories.length > 0) { %>
+  <div style="margin-top:40px;">
+    <h3 style="margin-bottom:12px;">Inactive Categories</h3>
+
+    <div class="table-container">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Name</th>
+            <th>Description</th>
+            <th>Last Updated</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          <% inactiveCategories.forEach(cat => { %>
+            <tr>
+              <td><%= cat.name %></td>
+              <td><%= cat.description || '-' %></td>
+              <td>
+                <%= new Date(cat.updated_at || cat.created_at).toLocaleDateString() %>
+              </td>
+              <td>
+                <form
+                  action="/admin/categories/reactivate/<%= cat.id %>"
+                  method="POST"
+                  style="display:inline;"
+                >
+                  <button type="submit" class="btn btn-sm btn-secondary">
+                    Reactivate
+                  </button>
+                </form>
+              </td>
+            </tr>
+          <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+<% } %>
 
       </div>
-    </main>
+    </div>
+  </main>
+</div>
 
-  </div>
+<!-- Live search -->
 <script>
   const searchInput = document.getElementById('searchCategories');
   const tableBody = document.getElementById('categoriesTable');
@@ -179,7 +285,6 @@
   });
 </script>
 
-    <script src="/js/common.js"></script>
-
+<script src="/js/common.js"></script>
 </body>
 </html>

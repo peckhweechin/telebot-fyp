@@ -4,20 +4,37 @@ const bcrypt = require('bcrypt');
 const session = require('express-session');
 const multer = require('multer');
 const path = require('path');
+require('dotenv').config();
+
 
 const app = express();
+/* ================= MULTER CONFIG ================= */
 
-/* ================= DATABASE ================= */
-const db = mysql.createConnection({
-  host: 'localhost',
-  user: 'root',
-  password: 'Xiaobai0409',
-  database: 'telebot_fyp',
+const storage = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, 'public/uploads');
+  },
+  filename: (req, file, cb) => {
+    const uniqueName =
+      Date.now() + '-' + Math.round(Math.random() * 1e9) + path.extname(file.originalname);
+    cb(null, uniqueName);
+  }
 });
 
-db.connect(err => {
-  if (err) throw err;
-  console.log('✅ Connected to MySQL');
+const upload = multer({
+  storage: storage,
+  limits: { fileSize: 5 * 1024 * 1024 } // 5MB per file
+});
+const fs = require('fs');
+/* ================= DATABASE ================= */
+require('dotenv').config();
+
+const db = mysql.createConnection({
+  host: process.env.MYSQLHOST,
+  user: process.env.MYSQLUSER,
+  password: process.env.MYSQLPASSWORD,
+  database: process.env.MYSQL_DATABASE,
+  port: process.env.MYSQLPORT,
 });
 
 /* ================= MIDDLEWARE ================= */
@@ -84,8 +101,8 @@ app.post('/login', async (req, res) => {
     }
   );
 });
-
 app.get('/signup', (req, res) => {
+  if (req.session.admin) return res.redirect('/admin/homepage');
   res.render('signup');
 });
 
@@ -102,20 +119,59 @@ app.post('/signup', async (req, res) => {
 
   const hash = await bcrypt.hash(password, 10);
 
+  // 1️⃣ Check if admin already exists
   db.query(
-    'INSERT INTO admin_users (name, email, password_hash) VALUES (?, ?, ?)',
-    [username, email, hash],
-    err => {
+    'SELECT id, is_active FROM admin_users WHERE email = ?',
+    [email],
+    (err, rows) => {
       if (err) {
         console.error(err);
+        return res.render('signup', { error: 'Database error' });
+      }
+
+      // 2️⃣ Admin exists
+      if (rows.length > 0) {
+        const admin = rows[0];
+
+        // 🔁 Reactivate if inactive
+        if (admin.is_active === 0) {
+          return db.query(
+            'UPDATE admin_users SET name=?, password_hash=?, is_active=1 WHERE email=?',
+            [username, hash, email],
+            err2 => {
+              if (err2) {
+                console.error(err2);
+                return res.render('signup', { error: 'Database error' });
+              }
+              return res.redirect('/login');
+            }
+          );
+        }
+
+        // 🚫 Already active
         return res.render('signup', {
-          error: 'Admin already exists or database error',
+          error: 'Admin already exists',
         });
       }
-      res.redirect('/login');
+
+      // 3️⃣ Insert new admin
+      db.query(
+        'INSERT INTO admin_users (name, email, password_hash, is_active) VALUES (?, ?, ?, 1)',
+        [username, email, hash],
+        err3 => {
+          if (err3) {
+            console.error(err3);
+            return res.render('signup', { error: 'Database error' });
+          }
+          res.redirect('/login');
+        }
+      );
     }
   );
 });
+
+
+
 
 app.post('/logout', (req, res) => {
   req.session.destroy(() => res.redirect('/login'));
@@ -210,118 +266,198 @@ app.get('/api/dashboard/out-of-stock', ensureAdmin, (req, res) => {
   });
 });
 
-/* ================= PRODUCT UPLOAD ================= */
-const storage = multer.diskStorage({
-  destination: './public/uploads/',
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  },
-});
-
-const upload = multer({ storage });
-
+/* ================= PRODUCTS LIST ================= */
 app.get('/admin/products', ensureAdmin, (req, res) => {
-  const sql = `
-    SELECT 
-      p.*,
-      c.name AS category_name,
-      (
-        SELECT pi.image_url
-        FROM product_images pi
-        WHERE pi.product_id = p.id
-        LIMIT 1
-      ) AS image_url
+  const limit = 6;
+  const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+  const offset = (page - 1) * limit;
+
+  const q = (req.query.q || '').trim();
+  const like = `%${q}%`;
+
+  const categoryId = (req.query.category_id || '').trim(); // ✅ new
+
+  // ✅ build WHERE conditions
+  const whereParts = [];
+  const whereParams = [];
+
+  if (q) {
+    whereParts.push(`(p.name LIKE ? OR p.description LIKE ? OR c.name LIKE ?)`);
+    whereParams.push(like, like, like);
+  }
+
+  if (categoryId) {
+    whereParts.push(`p.category_id = ?`);
+    whereParams.push(categoryId);
+  }
+
+  const whereSql = whereParts.length ? `WHERE ${whereParts.join(' AND ')}` : ``;
+
+  const countSql = `
+    SELECT COUNT(*) AS total
     FROM products p
     LEFT JOIN categories c ON p.category_id = c.id
-    ORDER BY p.created_at DESC
+    ${whereSql}
   `;
 
-  db.query(sql, (err, products) => {
+  const listSql = `
+    SELECT p.*, c.name AS category_name
+    FROM products p
+    LEFT JOIN categories c ON p.category_id = c.id
+    ${whereSql}
+    ORDER BY p.created_at ASC
+    LIMIT ? OFFSET ?
+  `;
+
+  db.query(countSql, whereParams, (err, countRows) => {
     if (err) {
       console.error(err);
-      return res.send('Failed to load products');
+      return res.status(500).send('Failed to load products');
     }
-    res.render('products', { products });
+
+    const total = countRows?.[0]?.total || 0;
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+
+    db.query(listSql, [...whereParams, limit, offset], (err2, products) => {
+      if (err2) {
+        console.error(err2);
+        return res.status(500).send('Failed to load products');
+      }
+
+      res.render('products', {
+        products,
+        page,
+        totalPages,
+        q,
+        categoryId: req.query.category_id || ''
+      });
+    });
   });
 });
 
-
-/* add product page */
+/* ================= ADD PRODUCT ================= */
 // GET Add Product
 app.get('/admin/addproduct', ensureAdmin, (req, res) => {
   db.query('SELECT * FROM categories WHERE is_active = 1', (err, categories) => {
     if (err) return res.send('Failed to load categories');
-
-    // Pass empty oldData and error by default
     res.render('addproduct', { categories, oldData: {}, error: null });
   });
 });
 
 // POST Add Product
-app.post(
-  '/admin/addproduct',
-  ensureAdmin,
-  upload.array('images', 10),
-  (req, res) => {
-    const { name, description, price, quantity, category_id } = req.body;
+app.post('/admin/addproduct', ensureAdmin, upload.array('images', 10), (req, res) => {
+  const { name, description, price, quantity, category_id } = req.body;
 
-    if (!name || !price || !quantity || !category_id || !req.files || req.files.length === 0) {
-      return db.query('SELECT * FROM categories WHERE is_active = 1', (err, categories) => {
-        res.render('addproduct', {
-          categories,
-          oldData: req.body,
-          error: 'All fields are required and at least one image must be uploaded'
-        });
+  if (
+    !name ||
+    !price ||
+    !quantity ||
+    !category_id ||
+    !req.files ||
+    req.files.length === 0
+  ) {
+    return db.query('SELECT * FROM categories WHERE is_active = 1', (err, categories) => {
+      return res.render('addproduct', {
+        categories,
+        oldData: req.body,
+        error: 'All fields are required and at least one image must be uploaded',
       });
-    }
+    });
+  }
 
-    // Duplicate name check
-    db.query('SELECT id FROM products WHERE name = ? AND is_active = 1', [name], (err, results) => {
+  // Duplicate name check
+  db.query(
+    'SELECT id FROM products WHERE name = ? AND is_active = 1',
+    [name],
+    (err, results) => {
       if (err) {
         console.error(err);
-        return db.query('SELECT * FROM categories WHERE is_active = 1', (err, categories) => {
-          res.render('addproduct', { categories, oldData: req.body, error: 'Database error' });
+        return db.query('SELECT * FROM categories WHERE is_active = 1', (err2, categories) => {
+          return res.render('addproduct', {
+            categories,
+            oldData: req.body,
+            error: 'Database error',
+          });
         });
       }
 
       if (results.length > 0) {
-        return db.query('SELECT * FROM categories WHERE is_active = 1', (err, categories) => {
-          res.render('addproduct', { categories, oldData: req.body, error: 'Product with this name already exists' });
+        return db.query('SELECT * FROM categories WHERE is_active = 1', (err2, categories) => {
+          return res.render('addproduct', {
+            categories,
+            oldData: req.body,
+            error: 'Product with this name already exists',
+          });
         });
       }
 
-      // Insert product WITHOUT cover image yet
-      db.query(
-        `INSERT INTO products (name, description, price, quantity, category_id)
-         VALUES (?, ?, ?, ?, ?)`,
-        [name, description || '', price, quantity, category_id],
-        (err, result) => {
-          if (err) {
-            console.error(err);
-            return db.query('SELECT * FROM categories WHERE is_active = 1', (err, categories) => {
-              res.render('addproduct', { categories, oldData: req.body, error: 'DB error' });
-            });
-          }
+      // 1) insert product (set stock from quantity so your table shows correct stock)
 
-          const productId = result.insertId;
+db.query(
+  `
+  INSERT INTO products (
+    name,
+    description,
+    price,
+    telegram_stock,
+    warehouse_stock,
+    stock,
+    category_id,
+    is_active
+  )
+  VALUES (?, ?, ?, ?, ?, ?, ?, 1)
+  `,
+  [
+    name,
+    description || '',
+    price,
+    quantity,   // telegram_stock
+    0,          // warehouse_stock (inventory page later)
+    quantity,   // total stock
+    category_id
+  ],
+  (err3, result) => {
+    if (err3) {
+      console.error(err3);
+      return db.query(
+        'SELECT * FROM categories WHERE is_active = 1',
+        (err4, categories) => {
+          return res.render('addproduct', {
+            categories,
+            oldData: req.body,
+            error: 'DB error',
+          });
+        }
+      );
+    }
 
-          // ✅ Set cover image based on selected coverIndex
-          const coverIndex = parseInt(req.body.coverIndex) || 0;
-          const coverImageUrl = '/uploads/' + req.files[coverIndex].filename;
+    const productId = result.insertId;
 
+    // 👉 continue image upload logic here
+  }
+);
+
+
+          // 2) insert all images
+          const imagesToInsert = req.files.map(f => [productId, '/uploads/' + f.filename]);
           db.query(
-            'UPDATE products SET image_url = ? WHERE id = ?',
-            [coverImageUrl, productId],
-            err => {
-              if (err) console.error(err);
+            'INSERT INTO product_images (product_id, image_url) VALUES ?',
+            [imagesToInsert],
+            err5 => {
+              if (err5) console.error(err5);
 
-              // ✅ Insert all images into product_images table
-              const imagesToInsert = req.files.map(f => [productId, '/uploads/' + f.filename]);
+              // 3) set cover based on coverIndex (defaults to 0)
+              const coverIndex = Number.isFinite(parseInt(req.body.coverIndex))
+                ? parseInt(req.body.coverIndex)
+                : 0;
+              const safeIndex = Math.min(Math.max(coverIndex, 0), req.files.length - 1);
+              const coverImageUrl = '/uploads/' + req.files[safeIndex].filename;
+
               db.query(
-                'INSERT INTO product_images (product_id, image_url) VALUES ?',
-                [imagesToInsert],
-                err => {
-                  if (err) console.error(err);
+                'UPDATE products SET image_url = ? WHERE id = ?',
+                [coverImageUrl, productId],
+                err6 => {
+                  if (err6) console.error(err6);
                   res.redirect('/admin/products');
                 }
               );
@@ -329,111 +465,160 @@ app.post(
           );
         }
       );
-    });
-  }
-);
+    }
+  );
 
-/* edit product page */
+/* ================= EDIT PRODUCT ================= */
+// GET edit product
 app.get('/admin/editproduct/:id', ensureAdmin, async (req, res) => {
   const productId = req.params.id;
 
   try {
-    // 1️⃣ Get product
     const [productRows] = await db.promise().query(
       'SELECT * FROM products WHERE id = ?',
       [productId]
     );
 
-    if (productRows.length === 0) {
-      return res.redirect('/admin/products');
-    }
+    if (!productRows.length) return res.redirect('/admin/products');
 
     const product = productRows[0];
 
-    // 2️⃣ Get product images
+    // IMPORTANT:
+    // Order images so the current cover (products.image_url) appears first in edit UI
     const [imageRows] = await db.promise().query(
-      'SELECT id, image_url FROM product_images WHERE product_id = ? ORDER BY id ASC',
-      [productId]
+      `
+      SELECT id, image_url
+      FROM product_images
+      WHERE product_id = ?
+      ORDER BY (image_url = ?) DESC, id ASC
+      `,
+      [productId, product.image_url]
     );
 
-    // 3️⃣ Attach images to product
     product.images = imageRows;
 
-    // 4️⃣ Get categories
     const [categories] = await db.promise().query(
       'SELECT * FROM categories WHERE is_active = 1'
     );
 
-    // 5️⃣ Render edit page WITH images
-    res.render('editproduct', {
-      product,
-      categories
-    });
-
+    res.render('editproduct', { product, categories });
   } catch (err) {
     console.error(err);
     res.redirect('/admin/products');
   }
 });
+
+// POST edit product
 app.post('/admin/editproduct/:id', ensureAdmin, upload.array('images', 10), (req, res) => {
   const productId = req.params.id;
-  const { name, price, quantity, category_id, removedImages, coverImageId } = req.body;
+  const { name, description, price, quantity, category_id, removedImages, coverImageId } = req.body;
 
-  // --- 1️⃣ Update product details ---
+  // 1) update product fields (also keep stock in sync with quantity)
   db.query(
-    `UPDATE products SET name=?, price=?, quantity=?, category_id=? WHERE id=?`,
-    [name, price, quantity, category_id, productId],
+    `UPDATE products SET name=?, description=?, price=?, quantity=?, stock=?, category_id=? WHERE id=?`,
+    [name, description || '', price, quantity, quantity, category_id, productId],
     err => {
-      if (err) return res.send('DB error updating product');
-
-      // --- 2️⃣ Remove deleted images ---
-      if (removedImages) {
-        const idsToRemove = removedImages.split(',').filter(Boolean);
-        if (idsToRemove.length) {
-          db.query(
-            'DELETE FROM product_images WHERE id IN (?)',
-            [idsToRemove],
-            err => {
-              if (err) console.error('Error deleting images:', err);
-            }
-          );
-        }
+      if (err) {
+        console.error(err);
+        return res.send('DB error updating product');
       }
 
-      // --- 3️⃣ Add new images ---
-      if (req.files && req.files.length) {
+      const removedIds = (removedImages || '')
+        .split(',')
+        .map(s => s.trim())
+        .filter(Boolean);
+
+      // 2) if removing images: fetch urls (to delete files), then delete DB rows
+      const removeImagesPromise = new Promise(resolve => {
+        if (!removedIds.length) return resolve();
+
+        db.query(
+          'SELECT id, image_url FROM product_images WHERE id IN (?)',
+          [removedIds],
+          (err2, rows) => {
+            if (!err2 && rows && rows.length) {
+              rows.forEach(r => {
+                if (!r.image_url) return;
+                const filePath = path.join(
+                  __dirname,
+                  'public',
+                  r.image_url.startsWith('/') ? r.image_url.slice(1) : r.image_url
+                );
+                fs.unlink(filePath, () => {});
+              });
+            }
+
+            db.query(
+              'DELETE FROM product_images WHERE id IN (?)',
+              [removedIds],
+              () => resolve()
+            );
+          }
+        );
+      });
+
+      // 3) add new images
+      const addImagesPromise = new Promise(resolve => {
+        if (!req.files || !req.files.length) return resolve();
         const newImages = req.files.map(f => [productId, '/uploads/' + f.filename]);
         db.query(
           'INSERT INTO product_images (product_id, image_url) VALUES ?',
           [newImages],
-          err => {
-            if (err) console.error('Error inserting new images:', err);
-          }
+          () => resolve()
         );
-      }
+      });
 
-      // --- 4️⃣ Update product cover ---
-      let coverImageUrl = null;
-      if (coverImageId) {
-        db.query('SELECT image_url FROM product_images WHERE id=?', [coverImageId], (err, results) => {
-          if (!err && results.length) {
-            coverImageUrl = results[0].image_url;
-            db.query('UPDATE products SET image_url=? WHERE id=?', [coverImageUrl, productId], err => {
-              if (err) console.error('Error updating cover:', err);
+      Promise.all([removeImagesPromise, addImagesPromise]).then(() => {
+        // 4) update cover (IMPORTANT: coverImageId is computed from FIRST thumbnail in edit UI)
+        // If coverImageId is missing or was deleted, fallback to first remaining image.
+        const setCover = (imageUrlOrNull) => {
+          db.query(
+            'UPDATE products SET image_url = ? WHERE id = ?',
+            [imageUrlOrNull, productId],
+            err9 => {
+              if (err9) console.error(err9);
               res.redirect('/admin/products');
-            });
-          } else {
-            res.redirect('/admin/products');
-          }
-        });
-      } else {
-        res.redirect('/admin/products');
-      }
+            }
+          );
+        };
+
+        if (coverImageId) {
+          db.query(
+            'SELECT image_url FROM product_images WHERE id = ? AND product_id = ?',
+            [coverImageId, productId],
+            (err8, rows) => {
+              if (!err8 && rows && rows.length) {
+                return setCover(rows[0].image_url);
+              }
+
+              // fallback: first image for this product
+              db.query(
+                'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY id ASC LIMIT 1',
+                [productId],
+                (err10, rows2) => {
+                  if (!err10 && rows2 && rows2.length) return setCover(rows2[0].image_url);
+                  return setCover(null);
+                }
+              );
+            }
+          );
+        } else {
+          // fallback if frontend didn't send cover id
+          db.query(
+            'SELECT image_url FROM product_images WHERE product_id = ? ORDER BY id ASC LIMIT 1',
+            [productId],
+            (err10, rows2) => {
+              if (!err10 && rows2 && rows2.length) return setCover(rows2[0].image_url);
+              return setCover(null);
+            }
+          );
+        }
+      });
     }
   );
 });
 
-// ================= CHECK DUPLICATE PRODUCT NAME =================
+/* ================= CHECK DUPLICATE PRODUCT NAME ================= */
 app.get('/admin/check-product-name', ensureAdmin, (req, res) => {
   const { name } = req.query;
   if (!name) return res.json({ exists: false });
@@ -442,126 +627,241 @@ app.get('/admin/check-product-name', ensureAdmin, (req, res) => {
     'SELECT id FROM products WHERE name = ? AND is_active = 1',
     [name],
     (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.json({ exists: false });
-      }
+      if (err) return res.json({ exists: false });
       res.json({ exists: results.length > 0 });
     }
   );
 });
 
-// ================= CHECK DUPLICATE PRODUCT NAME ON EDIT =================
-app.get('/admin/check-product-name-edit', ensureAdmin, (req, res) => {
-  const { name, id } = req.query;
-  if (!name) return res.json({ exists: false });
-
-  db.query(
-    'SELECT id FROM products WHERE name = ? AND id != ? AND is_active = 1',
-    [name, id],
-    (err, results) => {
-      if (err) {
-        console.error(err);
-        return res.json({ exists: false });
-      }
-      res.json({ exists: results.length > 0 });
-    }
-  );
-});
-
-// DELETE PRODUCT
+/* ================= DELETE PRODUCT ================= */
 app.post('/admin/deleteproduct/:id', ensureAdmin, (req, res) => {
   const productId = req.params.id;
 
-  // 1️⃣ Get all product images
-  db.query('SELECT image_url FROM product_images WHERE product_id = ?', [productId], (err, images) => {
-    if (err) {
-      console.error('Failed to fetch product images:', err);
-      return res.send('Error deleting product images');
-    }
-
-    // Delete image files
-    images.forEach(img => {
-      if (img.image_url) {
-        const filePath = path.join(__dirname, 'public', img.image_url.startsWith('/') ? img.image_url.slice(1) : img.image_url);
-        fs.unlink(filePath, err => {
-          if (err) console.error('Failed to delete image file:', filePath, err);
-        });
+  db.query(
+    'SELECT image_url FROM product_images WHERE product_id = ?',
+    [productId],
+    (err, images) => {
+      if (err) {
+        console.error('Failed to fetch product images:', err);
+        return res.send('Error deleting product images');
       }
-    });
 
-    // 2️⃣ Delete images from DB
-    db.query('DELETE FROM product_images WHERE product_id = ?', [productId], err => {
-      if (err) console.error('Failed to delete product images from DB:', err);
+      // delete files
+      images.forEach(img => {
+        if (!img.image_url) return;
+        const filePath = path.join(
+          __dirname,
+          'public',
+          img.image_url.startsWith('/') ? img.image_url.slice(1) : img.image_url
+        );
+        fs.unlink(filePath, () => {});
+      });
 
-      // 3️⃣ Delete product
-      db.query('DELETE FROM products WHERE id = ?', [productId], err => {
-        if (err) {
-          console.error('Failed to delete product:', err);
-          return res.send('Failed to delete product');
-        }
+      // delete db rows then product
+      db.query('DELETE FROM product_images WHERE product_id = ?', [productId], () => {
+        db.query('DELETE FROM products WHERE id = ?', [productId], err2 => {
+          if (err2) {
+            console.error('Failed to delete product:', err2);
+            return res.send('Failed to delete product');
+          }
+          res.redirect('/admin/products');
+        });
+      });
+    }
+  );
+});
 
-        res.redirect('/admin/products');
+/* ================= CATEGORIES ================= */
+app.get('/admin/categories', ensureAdmin, (req, res) => {
+  const limit = 6;
+  const page = Math.max(parseInt(req.query.page || '1', 10), 1);
+  const offset = (page - 1) * limit;
+
+  const countSql = `
+    SELECT COUNT(*) AS total
+    FROM categories
+    WHERE is_active = 1
+  `;
+
+  const listSql = `
+    SELECT *
+    FROM categories
+    WHERE is_active = 1
+    ORDER BY created_at ASC
+    LIMIT ? OFFSET ?
+  `;
+
+  const inactiveSql = `
+    SELECT *
+    FROM categories
+    WHERE is_active = 0
+    ORDER BY updated_at DESC
+  `;
+
+  db.query(countSql, (err, countRows) => {
+    if (err) return res.send('Failed to load categories');
+
+    const total = countRows[0].total;
+    const totalPages = Math.max(Math.ceil(total / limit), 1);
+
+    db.query(listSql, [limit, offset], (err2, categories) => {
+      if (err2) return res.send('Failed to load categories');
+
+      db.query(inactiveSql, (err3, inactiveCategories) => {
+        if (err3) inactiveCategories = [];
+
+        res.render('categories', {
+          categories,
+          inactiveCategories,
+          page,
+          totalPages
+        });
       });
     });
   });
 });
 
-
-
-/* ================= CATEGORIES ================= */
-app.get('/admin/categories', ensureAdmin, (req, res) => {
-  db.query(
-    'SELECT * FROM categories WHERE is_active = 1 ORDER BY created_at DESC',
-    (err, categories) => {
-      if (err) {
-        console.error(err);
-        return res.send('Failed to load categories');
-      }
-      res.render('categories', { categories });
-    }
-  );
-});
-/* add category page */
 app.get('/admin/categories/add', ensureAdmin, (req, res) => {
   res.render('addcategories');
 });
 
-app.post('/admin/categories/add', ensureAdmin, (req, res) => {
-  const { name } = req.body;
-
-  if (!name) {
-    return res.render('addcategories', {
-      error: 'Category name is required',
-    });
-  }
+app.post('/admin/categories/reactivate/:id', ensureAdmin, (req, res) => {
+  const id = req.params.id;
 
   db.query(
-    'INSERT INTO categories (name) VALUES (?)',
-    [name],
+    'UPDATE categories SET is_active = 1, updated_at = NOW() WHERE id = ?',
+    [id],
     err => {
       if (err) {
         console.error(err);
-        return res.render('addcategories', {
-          error: 'Category already exists or database error',
-        });
+        return res.redirect('/admin/categories');
       }
-
       res.redirect('/admin/categories');
     }
   );
 });
 
+app.post('/admin/categories/add', ensureAdmin, (req, res) => {
+  const { name, description, is_active } = req.body;
 
+  if (!name || !name.trim()) {
+    return res.render('addcategories', {
+      error: 'Category name is required',
+    });
+  }
 
-/* ================= Analytics ================= */
-app.get('/analytics', ensureAdmin, (req, res) => {
-  res.render('analytics', {
-    activePage: 'analytics'
+  // 🔒 Duplicate check (case-insensitive)
+  db.query(
+    'SELECT id FROM categories WHERE LOWER(name) = LOWER(?)',
+    [name.trim()],
+    (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.render('addcategories', {
+          error: 'Database error',
+        });
+      }
+
+      if (results.length > 0) {
+        return res.render('addcategories', {
+          error: 'This category name already exists',
+        });
+      }
+
+      // ✅ Insert if unique
+      db.query(
+        `INSERT INTO categories (name, description, is_active)
+         VALUES (?, ?, ?)`,
+        [name.trim(), description || null, is_active ? 1 : 0],
+        err2 => {
+          if (err2) {
+            console.error(err2);
+            return res.render('addcategories', {
+              error: 'Database error',
+            });
+          }
+          res.redirect('/admin/categories');
+        }
+      );
+    }
+  );
+});
+
+/* ================= EDIT CATEGORY ================= */
+// GET Edit Category page
+app.get('/admin/categories/edit/:id', ensureAdmin, (req, res) => {
+  const id = req.params.id;
+
+  db.query('SELECT * FROM categories WHERE id = ?', [id], (err, rows) => {
+    if (err || !rows.length) return res.redirect('/admin/categories');
+    res.render('editcategories', { category: rows[0], error: null });
   });
 });
 
-/* ================= Analytics API (REAL) ================= */
+// POST Update Category
+app.post('/admin/categories/edit/:id', ensureAdmin, (req, res) => {
+  const id = req.params.id;
+  const { name, description, is_active } = req.body;
+
+  if (!name || !name.trim()) {
+    return db.query(
+      'SELECT * FROM categories WHERE id = ?',
+      [id],
+      (err, rows) => {
+        return res.render('editcategories', {
+          category: rows[0],
+          error: 'Category name is required',
+        });
+      }
+    );
+  }
+
+  // 🔒 Duplicate check (exclude itself)
+  db.query(
+    'SELECT id FROM categories WHERE LOWER(name) = LOWER(?) AND id != ?',
+    [name.trim(), id],
+    (err, results) => {
+      if (err) {
+        console.error(err);
+        return res.render('editcategories', {
+          category: { id, name, description, is_active },
+          error: 'Database error',
+        });
+      }
+
+      if (results.length > 0) {
+        return res.render('editcategories', {
+          category: { id, name, description, is_active },
+          error: 'Another category with this name already exists',
+        });
+      }
+
+      // ✅ Update if unique
+      db.query(
+        `UPDATE categories
+         SET name = ?, description = ?, is_active = ?, updated_at = NOW()
+         WHERE id = ?`,
+        [name.trim(), description || null, is_active ? 1 : 0, id],
+        err2 => {
+          if (err2) {
+            console.error(err2);
+            return res.render('editcategories', {
+              category: { id, name, description, is_active },
+              error: 'Database error',
+            });
+          }
+
+          res.redirect('/admin/categories');
+        }
+      );
+    }
+  );
+});
+
+/* ================= Analytics ================= */
+app.get('/analytics', ensureAdmin, (req, res) => {
+  res.render('analytics', { activePage: 'analytics' });
+});
 
 app.get('/api/analytics/summary', ensureAdmin, (req, res) => {
   const sql = `
@@ -585,19 +885,15 @@ app.get('/api/analytics/summary', ensureAdmin, (req, res) => {
   `;
 
   db.query(sql, (err, results) => {
-    if (err) {
-      console.error(err);
-      return res.json({
-        revenue: 0,
-        orders: 0,
-        fulfilled: 0,
-        returningRate: 0
-      });
-    }
-
+    if (err) return res.json({ revenue: 0, orders: 0, fulfilled: 0, returningRate: 0 });
     res.json(results[0]);
   });
 });
+
+
+
+
+
 
 
 /* ================= Live View ================= */
@@ -662,13 +958,13 @@ app.get('/api/liveview/map', ensureAdmin, (req, res) => {
 
 
 /* ============================
-   discounts (server rendered)
+   DISCOUNTS (server rendered)
    ============================ */
 
-// list all discounts
+
 app.get('/discounts', ensureAdmin, (req, res) => {
   db.query(
-    'select * from discounts order by created_at desc',
+    'SELECT * FROM discounts WHERE is_active = 1 ORDER BY created_at DESC',
     (err, results) => {
       if (err) {
         console.error(err);
@@ -681,7 +977,6 @@ app.get('/discounts', ensureAdmin, (req, res) => {
     }
   );
 });
-
 
 // ============================
 // add discount
@@ -707,11 +1002,11 @@ app.post('/discounts/add', ensureAdmin, (req, res) => {
   } = req.body;
 
   const sql = `
-    insert into discounts
+    INSERT INTO discounts
       (code, type, value, usage_limit, used,
        category, description, minimum_purchase,
        valid_until, is_active, created_at)
-    values (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, now())
+    VALUES (?, ?, ?, ?, 0, ?, ?, ?, ?, ?, NOW())
   `;
 
   db.query(
@@ -739,14 +1034,13 @@ app.post('/discounts/add', ensureAdmin, (req, res) => {
 });
 
 
-// ============================
 // edit discount
-// ============================
+
 
 // show edit page
 app.get('/discounts/edit/:id', ensureAdmin, (req, res) => {
   db.query(
-    'select * from discounts where id = ?',
+    'SELECT * FROM discounts WHERE id = ?',
     [req.params.id],
     (err, rows) => {
       if (err || rows.length === 0) {
@@ -775,7 +1069,7 @@ app.post('/discounts/edit/:id', ensureAdmin, (req, res) => {
   } = req.body;
 
   const sql = `
-    update discounts set
+    UPDATE discounts SET
       code = ?,
       type = ?,
       value = ?,
@@ -785,8 +1079,8 @@ app.post('/discounts/edit/:id', ensureAdmin, (req, res) => {
       minimum_purchase = ?,
       valid_until = ?,
       is_active = ?,
-      updated_at = now()
-    where id = ?
+      updated_at = NOW()
+    WHERE id = ?
   `;
 
   db.query(
@@ -814,25 +1108,25 @@ app.post('/discounts/edit/:id', ensureAdmin, (req, res) => {
   );
 });
 
-
 // ============================
-// delete discount
+// delete discount 
 // ============================
 
-// soft delete discount
 app.post('/discounts/delete/:id', ensureAdmin, (req, res) => {
   db.query(
-    'update discounts set is_active = 0, updated_at = now() where id = ?',
+    'UPDATE discounts SET is_active = 0, updated_at = NOW() WHERE id = ?',
     [req.params.id],
     err => {
       if (err) {
         console.error(err);
         return res.status(500).send('database error');
       }
+
       res.redirect('/discounts');
     }
   );
 });
+
 
 
 
@@ -874,55 +1168,53 @@ app.get('/admin/inventory', ensureAdmin, (req, res) => {
 
 
 
-// ===== UPDATE STOCK =====
-app.post("/admin/inventory/update-stock", ensureAdmin, (req, res) => {
-  const { productId, newStock, reason } = req.body;
+app.get("/admin/inventory/update/:id", ensureAdmin, (req, res) => {
+  const productId = req.params.id;
 
-  if (!productId || newStock === undefined) {
-    return res.status(400).json({ error: "Missing data" });
-  }
-
-  // 1️⃣ Get current stock
   db.query(
-    "SELECT stock FROM products WHERE id = ?",
+    "SELECT id, name, stock FROM products WHERE id = ?",
     [productId],
-    (err, result) => {
-      if (err || result.length === 0) {
-        console.error(err);
-        return res.status(500).json({ error: "Product not found" });
+    (err, results) => {
+      if (err || results.length === 0) {
+        return res.redirect("/admin/inventory");
       }
 
-      const oldStock = result[0].stock;
-      const diff = newStock - oldStock;
-
-      // 2️⃣ Update product stock
-      db.query(
-        "UPDATE products SET stock = ? WHERE id = ?",
-        [newStock, productId],
-        err => {
-          if (err) {
-            console.error(err);
-            return res.status(500).json({ error: "Update failed" });
-          }
-
-          // 3️⃣ Log inventory adjustment (GOOD PRACTICE)
-          db.query(
-            `
-            INSERT INTO inventory_adjustments
-            (product_id, change_amount, reason)
-            VALUES (?, ?, ?)
-            `,
-            [productId, diff, reason || null],
-            err => {
-              if (err) console.error("Inventory log error:", err);
-              res.json({ success: true });
-            }
-          );
-        }
-      );
+      res.render("updateStock", { product: results[0], error: null });
     }
   );
 });
+
+app.post("/admin/inventory/update/:id", ensureAdmin, (req, res) => {
+  const productId = req.params.id;
+  const { stock } = req.body;
+
+  if (stock === "" || stock === null || isNaN(stock) || Number(stock) < 0) {
+    return db.query(
+      "SELECT id, name, stock FROM products WHERE id = ?",
+      [productId],
+      (err, results) => {
+        return res.render("updateStock", {
+          product: results[0],
+          error: "Stock must be 0 or more"
+        });
+      }
+    );
+  }
+
+  db.query(
+    "UPDATE products SET stock = ? WHERE id = ?",
+    [Number(stock), productId],
+    (err) => {
+      if (err) {
+        console.error(err);
+        return res.send("Failed to update stock");
+      }
+
+      res.redirect("/admin/inventory");
+    }
+  );
+});
+
 
 
 // ================= USERS PAGE =================
@@ -1082,6 +1374,9 @@ app.get('/abandoned-checkouts', ensureAdmin, (req, res) => {
 
 
 /* ================= SERVER ================= */
+console.log('DB HOST:', process.env.MYSQLHOST);
+console.log('DB NAME:', process.env.MYSQL_DATABASE);
+
 app.listen(3000, () => {
   console.log('Server running at http://localhost:3000');
 });

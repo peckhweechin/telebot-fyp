@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Category - TeleBot Admin Portal</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body>
+
+<div class="app-container">
+
+  <!-- Sidebar (same as your categories page) -->
+  <aside class="sidebar">
+    <div class="sidebar-header">
+      <h2>🤖 TeleBuy Admin</h2>
+    </div>
+
+    <nav class="sidebar-nav">
+      <a href="/admin/homepage" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">Home</span></a>
+      <a href="/admin/categories" class="nav-item active"><span class="nav-icon">📁</span><span class="nav-text">Categories</span></a>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle" type="button">
+          <div style="display:flex;align-items:center;">
+            <span class="nav-icon">🛍️</span><span class="nav-text">Products</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/admin/products" class="nav-item">All Products</a>
+          <a href="/admin/inventory" class="nav-item">Inventory</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle" type="button">
+          <div style="display:flex;align-items:center;">
+            <span class="nav-icon">👥</span><span class="nav-text">Customers</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/users" class="nav-item">All Customers</a>
+          <a href="/segments" class="nav-item">Segments</a>
+        </div>
+      </div>
+
+      <div class="nav-dropdown">
+        <button class="nav-dropdown-toggle" type="button">
+          <div style="display:flex;align-items:center;">
+            <span class="nav-icon">📦</span><span class="nav-text">Orders</span>
+          </div>
+          <span class="dropdown-arrow">▶</span>
+        </button>
+        <div class="nav-submenu">
+          <a href="/orders" class="nav-item">All Orders</a>
+          <a href="/abandoned-checkouts" class="nav-item">Abandoned Checkouts</a>
+        </div>
+      </div>
+
+      <a href="/discounts" class="nav-item"><span class="nav-icon">🏷️</span><span class="nav-text">Discounts</span></a>
+      <a href="/analytics" class="nav-item"><span class="nav-icon">📈</span><span class="nav-text">Analytics</span></a>
+      <a href="/liveview" class="nav-item"><span class="nav-icon">🔴</span><span class="nav-text">Live View</span></a>
+    </nav>
+
+    <div class="sidebar-notifications">
+      <div class="notifications-header">
+        <span>Notifications</span>
+        <span class="notifications-count" id="notifCount"></span>
+      </div>
+      <div class="notifications-list" id="notificationsList"></div>
+    </div>
+
+    <form action="/logout" method="POST">
+      <button type="submit" class="btn btn-secondary btn-block">Logout</button>
+    </form>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main-content">
+    <header class="content-header">
+      <h1>Edit Category</h1>
+      <div class="header-actions">
+        <a href="/admin/categories" class="btn btn-secondary">Back</a>
+      </div>
+    </header>
+
+    <div class="content-body">
+      <div class="card" style="max-width: 700px;">
+        <% if (error) { %>
+          <div class="alert alert-danger" style="margin-bottom:12px;">
+            <%= error %>
+          </div>
+        <% } %>
+
+        <form method="POST" action="/admin/categories/edit/<%= category.id %>">
+          <div class="form-group">
+            <label>Category Name *</label>
+            <input type="text" name="name" value="<%= category.name %>" required>
+          </div>
+
+          <div class="form-group">
+            <label>Description</label>
+            <textarea name="description" rows="4"><%= category.description || '' %></textarea>
+          </div>
+
+          <div class="form-group">
+            <label>
+              <input type="checkbox" name="is_active" value="1" <%= category.is_active ? 'checked' : '' %>>
+              Active
+            </label>
+          </div>
+
+          <div class="form-actions">
+            <a href="/admin/categories" class="btn btn-secondary">Cancel</a>
+            <button type="submit" class="btn btn-primary">Save Changes</button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </main>
+
+</div>
+
+<script src="/js/common.js"></script>
+</body>
+</html>
