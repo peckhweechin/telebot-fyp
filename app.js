@@ -544,7 +544,7 @@ app.get('/admin/editproduct/:id', ensureAdmin, async (req, res) => {
     'SELECT * FROM categories WHERE is_active = 1'
   );
 
-  res.render('editproduct', { product, categories });
+  res.render('editProduct', { product, categories });
 
 });
 
