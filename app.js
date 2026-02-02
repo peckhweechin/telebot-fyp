@@ -46,7 +46,7 @@ app.set('view engine', 'ejs');
 
 app.use(
   session({
-    secret: process.env.SESSION_SECRET || 'telebot_secret',
+    secret: 'telebot_secret',
     resave: false,
     saveUninitialized: false,
   })
