@@ -24,7 +24,7 @@ const db = mysql.createPool({
   host: process.env.MYSQLHOST,
   user: process.env.MYSQLUSER,
   password: process.env.MYSQLPASSWORD,
-  database: process.env.MYSQL_DATABASE,
+  database: process.env.MYSQLDATABASE,
   port: process.env.MYSQLPORT,
   waitForConnections: true,
   connectionLimit: 10,
@@ -46,7 +46,7 @@ app.set('view engine', 'ejs');
 
 app.use(
   session({
-    secret: 'telebot_secret',
+    secret: process.env.SESSION_SECRET || 'telebot_secret',
     resave: false,
     saveUninitialized: false,
   })
@@ -1735,8 +1735,7 @@ app.get('/api/notifications/stock', ensureAdmin, (req, res) => {
 
 /* ================= SERVER ================= */
 const PORT = process.env.PORT || 3000;
-
-app.listen(3000, () => {
-  console.log('Server running on http://localhost:3000');
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
 
